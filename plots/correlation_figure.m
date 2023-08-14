@@ -163,7 +163,7 @@ all_nans = isnan(nanmean(ic,2));
 
 clean_net_names = strrep(net_namesi(~all_nans),sprintf(' %s',montage_names{1}),'');
 nexttile
-turn_nans_gray(ic(~all_nans,~all_nans))
+turn_nans_gray_el(ic(~all_nans,~all_nans))
 xticks(1:size(ic,1));
 yticks(1:size(ic,1));
 %xticklabels(strrep(net_namesj(~all_nans),sprintf(' %s',montage_names{1}),''))
@@ -353,7 +353,7 @@ aic = aic(locb,locb);
 
 % plot it
 nexttile
-turn_nans_gray(aic)
+turn_nans_gray_el(aic)
 xticks(1:size(aic,1));
 yticks(1:size(aic,1));
 %xticklabels(strrep(net_namesj(~all_nans),sprintf(' %s',montage_names{1}),''))
