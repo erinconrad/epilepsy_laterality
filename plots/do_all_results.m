@@ -3,7 +3,12 @@ This is the primary script to run all the analyses for the epilepsy
 laterality project.
 %}
 
-do_full_pipeline = 1; % switch to 1 if you want to run the full analysis (takes several hours)
+% If this is set to 1, it will re-run the full analysis, which takes
+% several hours. If this is set to 0, it will look for .mat files
+% containing intermediate results from the machine learning algorithm in
+% your results path and load these in order to generate plots (this will
+% take a few minutes at most).
+do_full_pipeline = 1; 
 
 % End users should not change this
 doing_from_github = 1;
