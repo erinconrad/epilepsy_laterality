@@ -36,7 +36,7 @@ this is not necessary.
 results files, then edit plots/do_all_results.m so that do_full_pipeline =
 0.
 6) Then, to run the analysis, navigate to plots/ and run:
-    >> do_full_pipeline
+    >> do_all_results
 
 
 Erin Conrad
