@@ -8,7 +8,7 @@ laterality project.
 % containing intermediate results from the machine learning algorithm in
 % your results path and load these in order to generate plots (this will
 % take a few minutes at most).
-do_full_pipeline = 0; 
+do_full_pipeline = 1; 
 
 % End users should not change this
 doing_from_github = 1;
