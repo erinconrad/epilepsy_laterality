@@ -24,7 +24,7 @@ mt_data = mt_data.out;
 %% Initialize results file
 fname = [plot_folder,'results.html'];
 fid = fopen(fname,'a');
-fprintf(fid,'<br><u><i>Several interictal EEG feature asymmetries are distinct across SOZ lateralities</i></u></br>');
+fprintf(fid,'<br><u><i>Asymmetries in spike rates and relative entropy are distinct across SOZ lateralities</i></u></br>');
 fprintf(fid,['We compared interictal EEG feature AIs '...
     'between patients with left-sided, right-sided, and bilateral SOZs.']);
 
@@ -460,7 +460,7 @@ fprintf(fid,[' There was a significant difference in fMRI connectivity AI betwee
 
 fprintf(fid,['Similar to the result for interictal EEG data, this suggests that fMRI temporal lobe connectivity '...
     'AI distinguishes patients with left from bilateral SOZs, but cannot '...
-    'distinguish between patients with right and bilateral SOZs. ']);
+    'distinguish between patients with right and bilateral SOZs.</p>']);
 
 % Get stats if remove ieeg
 [p_rm_ieeg,tbl_rm_ieeg,stats_rm_ieeg] = anova1(AI(~ieeg),lat(~ieeg),'off');

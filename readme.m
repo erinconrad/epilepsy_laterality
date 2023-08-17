@@ -10,7 +10,7 @@ laterality and generate the figures from the epilepsy laterality paper.
 
 To run the analysis, follow these steps:
 1) Download the codebase from: 
-    https://github.com/erinconrad/epilepsy_laterality
+    https://github.com/penn-cnt/cnt_tle_laterality
 2) Download the datasets from: 
     https://upenn.box.com/s/67upxhl9wam135jn99jtjb72mmmz9aip
 3) Create a file called "epilepsy_laterality_locs.m" that contains paths to
