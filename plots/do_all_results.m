@@ -39,6 +39,7 @@ end
 % function use the existing .mat model result files to generate figures. If
 % set to 1, it replaces these .mat files with new ones.
 if do_full_pipeline
+    fprintf('\nDoing full pipeline, which will take at least several hours\n')
     model_ext_validation_files
 end
 
