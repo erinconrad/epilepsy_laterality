@@ -30,14 +30,17 @@ Put this file in your path.
 
 4) If you wish to only run the code to generate figures from intermediate
 results files, then put the three .mat files from the Box results folder
-into your results path. If you wish to re-run the analysis from scratch,
-this is not necessary.
+into your results path (locations.el_plots_folder). If you wish to re-run 
+the analysis from scratch, this is not necessary.
 5) If you wish to only run the code to generate figures from intermediate
 results files, then edit plots/do_all_results.m so that do_full_pipeline =
 0.
 6) Then, to run the analysis, navigate to plots/ and run:
     >> do_all_results
 
+
+If you rerun only the code to generate figures, this took several minutes
+(on a 2020 MacBook Air with an Apple M1 chip). 
 
 Erin Conrad
 University of Pennsylvania

@@ -22,12 +22,12 @@ script_folder = locations.el_script_folder;
 addpath(genpath(script_folder))
 
 % Remove the results.html file
-if exist([plot_folder,'results.html'],'file') ~= 0
-    delete([plot_folder,'results.html'])
+if exist(fullfile(plot_folder,'results.html'),'file') ~= 0
+    delete(fullfile(plot_folder,'results.html'))
 end
 
-if exist([plot_folder,'supplemental_results.html'],'file') ~= 0
-    delete([plot_folder,'supplemental_results.html'])
+if exist(fullfile(plot_folder,'supplemental_results.html'),'file') ~= 0
+    delete(fullfile(plot_folder,'supplemental_results.html'))
 end
 
 %% Do model analyses

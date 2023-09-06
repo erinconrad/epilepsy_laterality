@@ -26,7 +26,7 @@ end
 addpath(genpath(scripts_folder));
 
 %% Load the file containing intermediate data
-mt_data = load([inter_folder,'mt_out_epilepsy_laterality.mat']);
+mt_data = load(fullfile(inter_folder,'mt_out_epilepsy_laterality.mat'));
 mt_data = mt_data.out;
 
 for ir = 1:length(which_refs)
@@ -160,7 +160,7 @@ for ir = 1:length(which_refs)
     
     %% Do subsampling analysis
     fprintf('done, took %1.1f seconds',toc);
-    fprintf('\nStarting subsampling analysis.\n')
+    fprintf('\nStarting subsampling analysis (this will take several hours to a day).\n')
     tic
     
     % Run the lr_mt to extract features
@@ -244,7 +244,6 @@ for ir = 1:length(which_refs)
                 ext_auc_r(id,is) = AUCR;
     
             end
-            fprintf('median left internal AUC is %1.2f\n',nanmedian(cv_auc_l(id,:)))
     
         end
     

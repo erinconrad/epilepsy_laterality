@@ -486,7 +486,7 @@ annotation('textbox',[0.49 0.33 0.1 0.1],'String','D','LineStyle','none','fontsi
 print(gcf,[plot_folder,'Fig2'],'-dpng')
 
 %% Prediction analysis
-%{
+%
 % Do LOO CV
 npts = length(AI);
 
@@ -544,7 +544,42 @@ end
 
 % Get ROC curves
 [XL,YL,~,AUCL] = perfcurve(comb_br,all_scores(1,:),'left');
-[XR,YR,~,AUCR] = perfcurve(comb_bl,all_scores(2,:),'bl');
+[XR,YR,~,AUCR] = perfcurve(comb_bl,all_scores(2,:),'right');
+
+if 0
+    figure
+    plot(alt_scores(2,strcmp(comb_bl,'bl')),'o')
+    hold on
+    plot(alt_scores(2,strcmp(comb_bl,'right')),'o')
+
+    figure
+    plot(alt_scores(1,strcmp(comb_br,'left')),'o')
+    hold on
+    plot(alt_scores(1,strcmp(comb_br,'br')),'o')
+
+    figure
+    plot(AI(strcmp(comb_bl,'bl')),'o')
+    hold on
+    plot(AI(strcmp(comb_bl,'right')),'o')
+
+    figure
+    plot(fT.AI(comb_lat_bin==1),'o')
+    hold on
+    plot(fT.AI(comb_lat_bin==0),'o')
+
+    mdl = fitglm(fT,'lat_bin ~ AI','Distribution','binomial'); % basic LR model
+    coef = [mdl.Coefficients.Estimate(1);mdl.Coefficients.Estimate(2)];
+    % test the model on the testing data
+    score = glmval(coef,fT.AI,'logit');
+
+    figure
+    plot(score(strcmp(comb_bl,'bl')),'o')
+    hold on
+    plot(score(strcmp(comb_bl,'right')),'o')
+
+    figure
+    plot(all_scores(2,:),score,'o')
+end
 
 % Plot ROC curves
 figure
@@ -564,6 +599,7 @@ legend([ll],{sprintf('Left vs right/bilateral: AUC = %1.2f',AUCL),...
     'location','southeast')
 title({'LOO CV'})
 %}
+
 
 
 end
