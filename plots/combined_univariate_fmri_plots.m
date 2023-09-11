@@ -486,7 +486,7 @@ annotation('textbox',[0.49 0.33 0.1 0.1],'String','D','LineStyle','none','fontsi
 print(gcf,[plot_folder,'Fig2'],'-dpng')
 
 %% Prediction analysis
-%
+%{
 % Do LOO CV
 npts = length(AI);
 
