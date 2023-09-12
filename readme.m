@@ -40,7 +40,9 @@ results files, then edit plots/do_all_results.m so that do_full_pipeline =
 
 
 If you rerun only the code to generate figures, this took several minutes
-(on a 2020 MacBook Air with an Apple M1 chip). 
+(on a 2020 MacBook Air with an Apple M1 chip). If you re-run the code to do
+the full analysis, this took me about 6 hours on a AMD EPYC 7502P 32-Core 
+Processor.
 
 Erin Conrad
 University of Pennsylvania
