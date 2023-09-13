@@ -52,7 +52,7 @@ end
 %% Initialize figure
 figure
 
-set(gcf,'position',[25 235 1050 900])
+set(gcf,'position',[25 235 1400 900])
 t = tiledlayout(2,4,"TileSpacing",'tight','padding','tight');
 
 
@@ -229,7 +229,7 @@ ylabel(ax1,'|Cohen''s {\it d}|','color','k','fontsize',15)
 title(tt,{'Effect sizes (Cohen''s {\it d}) to distinguish specific laterality'},...
     'fontsize',20,'fontweight','bold')
 %}
-annotation('textbox', [0.55 0.895 0.1 0.1],...
+annotation('textbox', [0.6 0.895 0.1 0.1],...
     'String', 'Effect sizes (Cohen''s {\it d}) to distinguish specific laterality', ...
     'EdgeColor', 'none', ...
     'fontweight','bold','fontsize',17,...
@@ -406,10 +406,15 @@ mni_brain(mni_brain <= 100) = max(mni_brain,[],'all');
 % Set the mt_mask to a special value
 mni_brain(mt_mask==1) = nan;
 
+
 % Plots
 t1 = nexttile(t,5);
 colormap(t1,'gray')
-turn_nans_gray_el(imrotate(mni_brain(:,:,60),90),special_color,t1)
+axial_slice = imrotate(mni_brain(:,:,60),90);
+nrows = size(axial_slice,1);
+ncols = size(axial_slice,2);
+turn_nans_gray_el(axial_slice,...
+    special_color,t1)
 %axis equal
 axis off
 %title({'Regions included in fMRI','connectivity calculations'})
@@ -418,11 +423,15 @@ set(gca,'fontsize',15)
 % Plot brain again
 t2 = nexttile(t,6);
 colormap(t2,'gray')
-turn_nans_gray_el(imrotate(squeeze(mni_brain(:,100,:)),90),special_color,t2)
+coronal_slice = imrotate(squeeze(mni_brain(:,100,:)),90);
+nrows = size(coronal_slice,1);
+ncols = size(coronal_slice,2);
+turn_nans_gray_el(coronal_slice,...
+    special_color,t2)
 %axis equal
 axis off
 
-annotation('textbox', [0.07 0.32 0.1 0.1],...
+annotation('textbox', [0.12 0.32 0.1 0.1],...
     'String', 'Regions included in fMRI connectivity calculations', ...
     'EdgeColor', 'none', ...
     'fontweight','bold','fontsize',17,...
@@ -478,9 +487,9 @@ fprintf(fid,['Of the %d patients and controls studied in the fMRI analysis, '...
 
 %% Add subtitles
 annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-annotation('textbox',[0.49 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
 annotation('textbox',[0 0.33 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-annotation('textbox',[0.49 0.33 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+annotation('textbox',[0.5 0.33 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
 
 
 print(gcf,[plot_folder,'Fig2'],'-dpng')
