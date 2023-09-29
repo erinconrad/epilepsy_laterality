@@ -24,13 +24,9 @@ else
     numericPredictors(isinf(numericPredictors)) = NaN;
     
     % Do PCA with normalization
-    %
     w = 1./std(numericPredictors,[],1,"omitnan");
     [pcaCoefficients, pcaScores, ~, ~, explained, pcaCenters] = pca(...
         numericPredictors,'centered',true,'VariableWeights',w);
-    %}
-
-
     % Keep enough components to explain the desired amount of variance.
     explainedVarianceToKeepAsFraction = pc_perc/100;
     numComponentsToKeep = find(cumsum(explained)/sum(explained) >= explainedVarianceToKeepAsFraction, 1);
@@ -91,10 +87,9 @@ if length(features) == 1
     guessScoreFcn = @(x) 1./(1+exp(-(table2array(varfun(@double, predictorExtractionFcn(x)))*coef(2:end)+coef(1))));
 else
     pcaTransformationFcn = @(x) (table2array(varfun(@double, x)) - pcaCenters) .* w * pcaCoefficients; % apply PCA using the coefficients obtained from the training data
-    %invTransformationFcn = @(x) x'/pcaCoefficients/w+pcaCenters; % I only need this for understanding feature importance
+    invTransformationFcn = @(x) x'/pcaCoefficients/w+pcaCenters; % I only need this for understanding feature importance
     %invTransformationFcn = @(x) x'/pcaCoefficients;
     %invTransformationFcn = @(x) x' * pcaCoefficients' * diag(w);
-    invTransformationFcn = @(x) pcaCoefficients * x;
     predictFcn = @(x) class_from_bin(lr_prediction(lr_prob(pcaTransformationFcn(predictorExtractionFcn(x))))); % generate final class preciction
     probabilityFcn = @(x) lr_prob(pcaTransformationFcn(predictorExtractionFcn(x))); % generate probability
     predFcn2 = @(x) classifier.predict(pcaTransformationFcn(predictorExtractionFcn(x)));

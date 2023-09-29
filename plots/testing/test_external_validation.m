@@ -15,13 +15,13 @@ which_ref = 'car';
 
 %% Get file locs
 
-locations = fc_toolbox_locs;
+locations = epilepsy_laterality_locs;
 data_folder = locations.el_data_folder;
 fmri_folder = [data_folder,'fmri_data/'];
 plot_folder = locations.el_plots_folder;
 
 % add script folder to path
-scripts_folder = locations.script_folder;
+scripts_folder = locations.el_script_folder;
 addpath(genpath(scripts_folder));
 
 %% Load the file containing intermediate data
@@ -87,6 +87,11 @@ righta_int = classifier_wrapper(Ttrain,features,pca_perc,2,just_spikes,rm_non_te
 just_spikes = 0; % not just spikes
 lefta_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,1,just_spikes,rm_non_temporal,which_ref); % 1 means left
 righta_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
+
+if 0
+    feat = 'rl machine sleep';
+    boxplot(Ttrain.(feat),Ttrain.soz_lats)
+end
 
 % Get ROC stats
 [lefta_ext.XL,lefta_ext.YL,~,lefta_ext.AUCL] = perfcurve(lefta_ext.class,lefta_ext.scores,lefta_ext.pos_class);

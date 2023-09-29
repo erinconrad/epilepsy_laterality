@@ -3,6 +3,8 @@ function out = validation_classifier_wrapper(T,train,test,features,pca_perc,...
 % this code is the wrapping function to train a model on a training dataset
 % and test on an external validation set
 
+do_erin_test = 0;
+
 % Define response
 response = 'soz_lats';
 
@@ -47,12 +49,27 @@ end
 
 
 % Combine right and bilateral or left and bilateral
-if combine_br == 1
-    T.soz_lats(strcmp(T.soz_lats,'right') | strcmp(T.soz_lats,'bilateral')) = {'br'};
-elseif combine_br == 2
-    T.soz_lats(strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'bilateral')) = {'bl'};
-elseif combine_br == 3
-    T.soz_lats(strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'right')) = {'lr'};
+if do_erin_test
+    if combine_br == 1
+        right = strcmp(T.soz_lats,'right');
+        T(right,:) = [];
+        train(right) = [];
+        test(right) = [];
+    elseif combine_br == 2
+        left = strcmp(T.soz_lats,'left');
+        T(left,:) = [];
+        train(left) = [];
+        test(left) = [];
+    end
+
+else
+    if combine_br == 1
+        T.soz_lats(strcmp(T.soz_lats,'right') | strcmp(T.soz_lats,'bilateral')) = {'br'};
+    elseif combine_br == 2
+        T.soz_lats(strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'bilateral')) = {'bl'};
+    elseif combine_br == 3
+        T.soz_lats(strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'right')) = {'lr'};
+    end
 end
 
 % Initialize ROC parameters
@@ -167,6 +184,9 @@ out.unique_classes = classes;
 out.npts = npts;
 out.names = all_names;
 out.tc = tc;
+out.pcaCoefficients = pcaCoefficients;
+out.pcaCenters = pcaCenters;
+out.w = w;
 %out.alt_pred = alt_pred;
 
 out.accuracy = (C(1,1)+C(2,2))/sum(C,'all');
