@@ -140,6 +140,19 @@ coef = tc.coef(2:end);
 pcaCoefficients = tc.PCACoefficients;
 pcaCenters = tc.PCACenters;
 w = tc.pcaWeights;
+
+% erin test, these are the same, which is good
+if 0
+    nfeatures = length(features);
+    alt_imp = nan(nfeatures,1);
+    for i = 1:nfeatures
+        alt_imp(i) = dot(pcaCoefficients(i,:)',coef);
+    end
+
+    alt_imp2 = pcaCoefficients*coef;
+
+end
+
 if length(coef) > 1
     coef_feature_space = tc.invTransformationFcn(coef);
     [~,I] = sort(abs(coef_feature_space),'descend');

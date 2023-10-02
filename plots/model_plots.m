@@ -99,27 +99,27 @@ for ia = 1:length(which_refs)
         ax1 = axes(tt);
         
         
-        pl = plot(ax1,1:n_to_plot,left_coefs,'o','markersize',15,'color',[0 0.4470 0.7410],'linewidth',2);
+        pl = plot(ax1,1:n_to_plot,abs(left_coefs),'o','markersize',15,'color',[0 0.4470 0.7410],'linewidth',2);
         ax1.XAxisLocation = 'top';
         ax1.YAxisLocation = 'left';
         ax1.XColor = [0 0.4470 0.7410];
         ax1.YColor = [0 0.4470 0.7410];
         ax1.Box = 'off';
-        ax1.YLim = [min([min(left_coefs),min(right_coefs)]),...
-            max([max(left_coefs),max(right_coefs)])];
+        ax1.YLim = [min([min(abs(left_coefs)),min(abs(right_coefs))]),...
+            max([max(abs(left_coefs)),max(abs(right_coefs))])];
         ax1.XTick = 1:n_to_plot;
         ax1.XTickLabel = cellfun(all_shorten,cellfun(@greek_letters_plots,left_names,'uniformoutput',false),...
             'uniformoutput',false);
         
         ax2 = axes(tt);
-        pr = plot(ax2,1:n_to_plot,right_coefs,'+','markersize',15,'color',[0.8500 0.3250 0.0980],'linewidth',2);
+        pr = plot(ax2,1:n_to_plot,abs(right_coefs),'+','markersize',15,'color',[0.8500 0.3250 0.0980],'linewidth',2);
         ax2.XAxisLocation = 'bottom';
         ax2.YAxisLocation = 'right';
         ax2.XColor = [0.8500 0.3250 0.0980];
         ax2.YColor = [0.8500 0.3250 0.0980];
         ax2.Box = 'off';
-        ax2.YLim = [min([min(left_coefs),min(right_coefs)]),...
-            max([max(left_coefs),max(right_coefs)])];
+        ax2.YLim = [min([min(abs(left_coefs)),min(abs(right_coefs))]),...
+            max([max(abs(left_coefs)),max(abs(right_coefs))])];
         ax2.XTick = 1:n_to_plot;
         ax2.XTickLabel = cellfun(all_shorten,cellfun(@greek_letters_plots,right_names,'uniformoutput',false),...
             'uniformoutput',false);
@@ -128,11 +128,12 @@ for ia = 1:length(which_refs)
         
         legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',15)
         set(ax1,'fontsize',15); set(ax2,'fontsize',15)
-        ylabel('Estimated model coefficient','color','k','fontsize',15)
+        ylabel('|Estimated model coefficient|','color','k','fontsize',15)
         
         if ia == 1
-            fprintf(fid,['The sets of the most important features and corresponding '...
-                'feature weights were nearly identical for the left- and right-sided classifiers (Fig. 3D).</p>']);
+            fprintf(fid,['Spike rates, spike timing, and relative entropy were the most important '...
+                'features for the left-sided model, and a more heterogeneous '...
+                'set of features was most important for the right-sided model (Fig. 3D).</p>']);
         end
     
     else
