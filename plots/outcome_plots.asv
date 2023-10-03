@@ -102,11 +102,6 @@ for ir = 1:length(which_refs)
     spike_features = features(contains(features,'spikes') & contains(features,which_refs{ir}));
     nan_feature = isnan(T{:,spike_features});
     T(nan_feature,:) = [];    
-
-     % For ILAE, add "ILAE" to the MUSC folks
-    non_empty_musc = cellfun(@(x,y) ~isempty(x) & contains(y,'MP'),T.ilae_yr1,T.names);
-    T.ilae_yr1(non_empty_musc) = cellfun(@(x) sprintf('ILAE %s',x),T.ilae_yr1(non_empty_musc),'UniformOutput',false);
-
     
     %% Initialize figure
     figure
@@ -142,7 +137,10 @@ for ir = 1:length(which_refs)
         
         end
 
-       
+        % For ILAE, add "ILAE" to the MUSC folks
+        non_empty_musc = cellfun(@(x,y) ~isempty(x) & contains(y,'MP'),T.ilae_yr1,T.names);
+        T.ilae_yr1
+    
         %% A and D: Show overall outcomes
         % find those who had surgery
         surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));

@@ -89,7 +89,7 @@ lefta_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,1,just_
 righta_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
 
 if 0
-    feat = 'rl machine sleep';
+    feat = 'rl car sleep';
     boxplot(Ttrain.(feat),Ttrain.soz_lats)
 end
 
