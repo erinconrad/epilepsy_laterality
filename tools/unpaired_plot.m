@@ -23,6 +23,10 @@ switch which_test
         stats.means = [nanmean(a) nanmean(b)];
         stats.sd = [nanstd(a) nanstd(b)];
 end
+max_all = max([max(a) max(b)]);
+min_all = min([min(a) min(b)]);
+span = max_all-min_all;
+ylim([min_all - 0.1*span max_all+0.1*span])
 yl = ylim;
 ybar = yl(1)+(yl(2)-yl(1))*1.1;
 ytext = yl(1)+(yl(2)-yl(1))*1.15;

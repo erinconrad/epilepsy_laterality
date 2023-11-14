@@ -8,8 +8,12 @@ if isempty(response)
     response = 'soz_lats';
 end
 
+% restrict to given reference - new as of Nov 2023
+features = features(contains(features,which_ref));
+
 % Restrict to spike features if desired
-spike_features = features(contains(features,'spikes') & contains(features,which_ref));
+spike_features = features(contains(features,'spikes'));
+%spike_features = features(contains(features,'spikes') & contains(features,which_ref));
 
 if just_spikes == 1 || just_spikes == 2
     features = spike_features;
@@ -23,6 +27,7 @@ npts = size(T,1);
 % Remove non temporal patients if desired
 if rm_non_temporal == 1
     temporal = strcmp(T.soz_locs,'temporal');
+    assert(sum(~temporal)==0) % I should have already removed these
     T(~temporal,:) = [];
     npts = size(T,1);
 elseif rm_non_temporal == 2 % only include non-temporal (excludes diffuse and multifocal)
@@ -35,7 +40,7 @@ end
 % variable
 %
 if just_spikes == 1 || just_spikes == 2   
-    nan_feature = isnan(T{:,spike_features});
+    nan_feature = all(isnan(T{:,spike_features}),2);
     out.rm_nan_spikes = sum(nan_feature); % note how many i end up removing 
     T(nan_feature,:) = [];    
     npts = size(T,1);
@@ -141,10 +146,16 @@ for i = 1:npts
 
     % make prediction on left out
     %pred = tc.predictFcn(Ttest);
-    pred = tc.predFcn2(Ttest);
+
+    if combine_br == 0
+        pred = tc.predictFcn(Ttest);
+    else
+        pred = tc.predFcn2(Ttest);
+        alt_pred = tc.guessPred(Ttest);
+        alt_preds{i} = alt_pred{1};
+    end
     all_pred{i} = pred{1};
-    alt_pred = tc.guessPred(Ttest);
-    alt_preds{i} = alt_pred{1};
+    
     
     % compare to true
     true = Ttest.(response);
@@ -193,14 +204,18 @@ end
 % match what I think they should be
 if contains(features,'samp')
 else
-    assert(sum(abs(all_scores-alt_all_scores)>1e-3)==0)
-    assert(isequal(all_pred,alt_preds))
+    if combine_br ~=0
+        assert(sum(abs(all_scores-alt_all_scores)>1e-3)==0)
+        assert(isequal(all_pred,alt_preds))
+    end
 end
 
 % Prepare output structure
 out.scores = all_scores;
-out.alt_scores = alt_all_scores;
-out.alt_preds = alt_preds;
+if combine_br ~=0
+    out.alt_scores = alt_all_scores;
+    out.alt_preds = alt_preds;
+end
 out.class = T.(response);
 out.pos_class = classes{2};
 out.all_pred = all_pred;

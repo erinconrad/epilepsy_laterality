@@ -8,8 +8,15 @@ do_erin_test = 0;
 % Define response
 response = 'soz_lats';
 
+% restrict to given reference - new as of Nov 2023
+features = features(contains(features,which_ref));
+
+% Restrict to spike features if desired - if restricting to spikes, also
+% restrict to sleep
+spike_features = features(contains(features,'spikes'));
+
 % Restrict to spike features if desired
-spike_features = features(contains(features,'spikes') & contains(features,which_ref));
+%spike_features = features(contains(features,'spikes') & contains(features,which_ref));
 
 if just_spikes == 1 || just_spikes == 2
     features = spike_features;
@@ -39,7 +46,7 @@ end
 % If I am doing a single feature model, exclude patient(s) with nan for
 % variable
 if just_spikes == 1 || just_spikes == 2   
-    nan_feature = isnan(T{:,spike_features});
+    nan_feature = all(isnan(T{:,spike_features}),2);
     out.rm_nan_spikes = sum(nan_feature);
     T(nan_feature,:) = [];
     train(nan_feature) = []; test(nan_feature) = [];
@@ -82,10 +89,12 @@ Ttrain = T(train,:);
 Ttest = T(test,:);
 
 % Perform imputation of missing data
+nan_replacement = nan(size(Ttrain,2),1);
 for j = 1:size(Ttrain,2)
     a = Ttrain{:,j};
     if ~isnumeric(a), continue; end
 
+    nan_replacement(j) = nanmedian(a);
     a(isnan(a)) = nanmedian(a);
     Ttrain{:,j} = a;
 
@@ -187,11 +196,13 @@ for i = 1:length(all_pred)
 
 end
 
+
 %% Prepare output structure
 out.scores = all_scores;
 out.class = Ttest.(response);
 out.pos_class = classes{2};
 out.all_pred = all_pred;
+out.nan_replacement = nan_replacement; 
 out.C = C;
 out.unique_classes = classes;
 out.npts = npts;

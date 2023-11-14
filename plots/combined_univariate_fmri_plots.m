@@ -6,6 +6,9 @@ which_pts = 'hup';
 rm_non_temporal = 1;
 response = 'soz_lats';
 just_sep_bilat = 1;
+good_outcome_only = 0;
+which_year = 1;
+which_outcome = 'engel';
 
 % fmri parameters
 rm_controls = 1;
@@ -43,10 +46,29 @@ switch which_pts
         T(~musc,:) = [];
 end
 
+%% Get outcomes
+surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
+outcome_name = [which_outcome,'_yr',sprintf('%d',which_year)];
+outcome_bin = cellfun(@(x) parse_outcome_new(x,which_outcome),T.(outcome_name),'UniformOutput',false);
+good_outcome = strcmp(outcome_bin,'good') & surg == 1;
+
+
+
 %% Remove non temporal patients
 if rm_non_temporal
     temporal = strcmp(T.soz_locs,'temporal');
-    T(~temporal,:) = [];
+
+    % Restrict to good outcome patients too?
+    if good_outcome_only
+        good_outcome_unilat = good_outcome & (strcmp(T.(response),'left') | strcmp(T.(response),'right'));
+        bilat = strcmp(T.(response),'bilateral');
+
+        % allow if bilateral or unilateral and good outcome
+        allowed_outcome = good_outcome_unilat|bilat;
+        T(~temporal | ~allowed_outcome,:) = [];
+    else
+        T(~temporal,:) = [];
+    end
 end
 
 %% Initialize figure

@@ -9,9 +9,12 @@ function test_external_validation
 for_will = 0;
 pca_perc = 95; % the percent variance to explain for pca
 rm_non_temporal = 1; % remove patients who are not temporal
-rm_wake = 1; % don't include wake segments
+rm_wake = 0; % don't include wake segments
 rm_bad_spikes = 0;
 which_ref = 'car';
+good_outcome_only = 1;
+which_year = 1;
+which_outcome = 'engel';
 
 %% Get file locs
 
@@ -42,7 +45,7 @@ if rm_wake == 1
     [T,features] =  lr_mt(mt_data,3,rm_bad_spikes); % the 3 refers to only looking at sleep
 
 else
-    error('why are you doing this?')
+    [T,features] =  lr_mt(mt_data,[2 3],rm_bad_spikes);
 end
 
 
@@ -50,6 +53,10 @@ end
 % Remove those without a response (soz_lats is the response variable)
 empty_class = cellfun(@isempty,T.soz_lats);
 T(empty_class,:) = [];
+
+% Remove non-temporal
+temporal = strcmp(T.soz_locs,'temporal');
+T(~temporal,:) = [];
 
 % As a test, remove bilateral
 if 0
@@ -60,9 +67,29 @@ end
 %% Get fmri AI and add it to table
 T = add_fmri_info_table(T,fT,rid_table,csv_path);
 
+%% Get outcomes
+surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
+outcome_name = [which_outcome,'_yr',sprintf('%d',which_year)];
+outcome_bin = cellfun(@(x) parse_outcome_new(x,which_outcome),T.(outcome_name),'UniformOutput',false);
+good_outcome = strcmp(outcome_bin,'good') & surg == 1;
+
+% Restrict HUP patients to good outcome or bilateral
+if good_outcome_only
+    response = 'soz_lats';
+    good_outcome_unilat = good_outcome & (strcmp(T.(response),'left') | strcmp(T.(response),'right'));
+    bilat = strcmp(T.(response),'bilateral');
+
+    % allow if (MUSC) or (bilateral) or (unilateral and good outcome)
+    allowed_outcome = contains(T.names,'MP')|good_outcome_unilat|bilat;
+    T(~allowed_outcome,:) = [];
+
+end
+
 %% Establish HUP and MUSC as training and testing, respectively
 train  = contains(T.names,'HUP');
 test  = contains(T.names,'MP');
+
+
 
 %% try multiclass model on spikes
 % oof doesn't work
@@ -101,8 +128,8 @@ end
 %% Do the LOO cross validation on the HUP data - spike only model
 Ttrain = T(train,:);
 just_spikes = 1; % only spike feature
-lefts_int = classifier_wrapper(Ttrain,features,pca_perc,1,just_spikes,rm_non_temporal,[],which_ref); % 1 means left
-rights_int = classifier_wrapper(Ttrain,features,pca_perc,2,just_spikes,rm_non_temporal,[],which_ref); % 2 means right
+lefts_int = classifier_wrapper(Ttrain,features(contains(features,'sleep')),pca_perc,1,just_spikes,rm_non_temporal,[],which_ref); % 1 means left
+rights_int = classifier_wrapper(Ttrain,features(contains(features,'sleep')),pca_perc,2,just_spikes,rm_non_temporal,[],which_ref); % 2 means right
 
 % Get ROC stats
 [lefts_int.XL,lefts_int.YL,~,lefts_int.AUCL] = perfcurve(lefts_int.class,lefts_int.scores,lefts_int.pos_class);
@@ -112,8 +139,8 @@ rights_int = classifier_wrapper(Ttrain,features,pca_perc,2,just_spikes,rm_non_te
 %% Train on the HUP data, test on MUSC - spike only model
 fprintf('\nDoing main models...');
 just_spikes = 1; 
-lefts_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,1,just_spikes,rm_non_temporal,which_ref); % 1 means left
-rights_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
+lefts_ext = validation_classifier_wrapper(T,train,test,features(contains(features,'sleep')),pca_perc,1,just_spikes,rm_non_temporal,which_ref); % 1 means left
+rights_ext = validation_classifier_wrapper(T,train,test,features(contains(features,'sleep')),pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
 
 % Get ROC stats
 [lefts_ext.XL,lefts_ext.YL,~,lefts_ext.AUCL] = perfcurve(lefts_ext.class,lefts_ext.scores,lefts_ext.pos_class);
@@ -189,6 +216,7 @@ features_left_test = T{test,sprintf('spikes %s sleep',which_ref)};
 classNames = lefts_ext.unique_classes;
 coefs = lefts_ext.tc.coef;
 
+
 % Try to solve it again using a simple calculator
 [preds,scores] = simple_prediction_calculator(features_left_test,classNames,coefs);
 
@@ -207,4 +235,5 @@ coefs = rights_ext.tc.coef;
 % confirm that I can re-derive the predicted scores and classes
 assert(isequal(preds,rights_ext.all_pred))
 assert(sum(abs(scores-rights_ext.scores)>1e-3)==0)
+%}
 end

@@ -1,4 +1,5 @@
-function model_ext_validation_files
+function old_model_ext_validation_files
+
 
 %{
 This function re-runs the code to take intermediate dataset containing
@@ -10,8 +11,8 @@ laterality.
 %% Parameters (end-users should probably not change)
 pca_perc = 95; % the percent variance to explain for pca
 rm_non_temporal = 1; % remove patients who are not temporal
-rm_wake = 0; % INCLUDE wake segments
-which_refs = {'car','bipolar','machine'};
+rm_wake = 1; % don't include wake segments
+which_refs = {'machine','car','bipolar'};
 
 %% Get locations of various files and scripts
 locations = epilepsy_laterality_locs;
@@ -33,85 +34,39 @@ for ir = 1:length(which_refs)
 
     file_name = sprintf('ext_models_%s.mat',which_refs{ir});
 
-    % Get the AI features
-    if rm_wake == 1
-        [T,features] =  lr_mt(mt_data,3); % the 3 refers to only looking at sleep
-    else
-        [T,features] =  lr_mt(mt_data,[2 3]); % wake and sleep
-    end
-
-    % Remove non-temporal
-    temporal = strcmp(T.soz_locs,'temporal');
-    T(~temporal,:) = [];
-
-    %% Main analysis and good outcome analysis
+    %% Main analysis and good spike analysis
     for ia = 1:2
-
-
+    
+        if ia == 1 % all spikes
+            approach(ia).type = 'all spikes';
+            % Run the lr_mt to extract AI features
+            if rm_wake == 1
+                [T,features] =  lr_mt(mt_data,3); % the 3 refers to only looking at sleep
+            else
+                error('why are you doing this?')
+            end
+    
+        else % good spikes only
+            approach(ia).type = 'good spikes, PPV above 0.5';
+            % Run the lr_mt to extract AI features, but restrict to good spikes
+            % only
+            if rm_wake == 1
+                [T,features] =  lr_mt(mt_data,3,1); % the 3 refers to only looking at sleep
+            else
+                error('why are you doing this?')
+            end
+    
+        end
+    
+        
         % Remove those without a response (soz_lats is the response variable)
         empty_class = cellfun(@isempty,T.soz_lats);
         T(empty_class,:) = [];
-
-        
-
-        % If doing good outcome analysis, restrict here
-        if ia == 1 % all patients
-            approach(ia).type = 'all patients';
-            approach(ia).nums= [];
-            
-        else % good outcome only
-            approach(ia).type = 'For HUP patients, only allow bilateral or unilateral good outcome (Engel 1)';
-            which_year = 1;
-            which_outcome = 'engel';
-
-            surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
-            outcome_name = [which_outcome,'_yr',sprintf('%d',which_year)];
-            outcome_bin = cellfun(@(x) parse_outcome_new(x,which_outcome),T.(outcome_name),'UniformOutput',false);
-            good_outcome = strcmp(outcome_bin,'good') & surg == 1;
-
-            good_outcome_unilat = good_outcome & (strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'right'));
-            good_outcome_left = good_outcome & (strcmp(T.soz_lats,'left'));
-            good_outcome_right = good_outcome & (strcmp(T.soz_lats,'right'));
-            bilat = strcmp(T.soz_lats,'bilateral');
-
-            % How many are there? I confirmed that I am removing 15 HUP
-            % unilateral patients who either did not have surgery or did
-            % not have good outcomes.
-            
-            hup = (contains(T.names,'HUP'));
-            hup_unilat = hup & (strcmp(T.soz_lats,'left') | strcmp(T.soz_lats,'right'));
-            hup_left = hup & strcmp(T.soz_lats,'left');
-            hup_right = hup & strcmp(T.soz_lats,'right');
-            hup_bilat = hup & bilat;
-            hup_good_outcome_unilat = hup & good_outcome_unilat;
-            hup_good_outcome_left = hup & good_outcome_left;
-            hup_good_outcome_right = hup & good_outcome_right;
-
-            if 0
-            fprintf(['\n There are %d HUP patients (%d left, %d right, and %d bilat). \n'...
-                'Of the unilateral patients, %d had good outcomes (%d left, %d right).\n'],...
-                sum(hup),sum(hup_left),sum(hup_right),sum(hup_bilat),...
-                sum(hup_good_outcome_unilat),sum(hup_good_outcome_left),sum(hup_good_outcome_right))
-            end
-            
-            % allow if (MUSC) or (bilateral) or (unilateral and good outcome)
-            allowed_outcome = contains(T.names,'MP')|good_outcome_unilat|bilat;
-            T(~allowed_outcome,:) = [];
-            approach(ia).nums.hup = sum(hup);
-            approach(ia).nums.hup_left = sum(hup_left);
-            approach(ia).nums.hup_right = sum(hup_right);
-            approach(ia).nums.hup_bilat = sum(hup_bilat);
-            approach(ia).nums.hup_good_outcome_unilat = sum(hup_good_outcome_unilat);
-            approach(ia).nums.hup_good_outcome_left = sum(hup_good_outcome_left);
-            approach(ia).nums.hup_good_outcome_right = sum(hup_good_outcome_right);
-            
-        end
         
         % Establish HUP and MUSC as training and testing, respectively
         train  = contains(T.names,'HUP');
         test  = contains(T.names,'MP');
         
-       
         % Establish model types
         model(1).type = 'All features';
         model(2).type = 'Spikes';
@@ -137,12 +92,6 @@ for ir = 1:length(which_refs)
         for im = 1:nmodels
             just_spikes = im - 1; % if full model, just_spikes = 0, if spikes, just_spikes = 1, if binary, just_spikes = 2
             
-            % If doing spikes only, restrict to sleep as well
-            if just_spikes == 1 || just_spikes == 2
-                curr_features = features(contains(features,'sleep'));
-            else
-                curr_features = features;
-            end
            
             % Loop over internal vs external validation
             for iv = 1:2
@@ -152,12 +101,12 @@ for ir = 1:length(which_refs)
         
                     % run the internal cross validation
                     if iv == 1
-                        out = classifier_wrapper(T(train,:),curr_features ,pca_perc,is,...
+                        out = classifier_wrapper(T(train,:),features,pca_perc,is,...
                             just_spikes,rm_non_temporal,[],which_refs{ir});
             
                     % run the external test
                     elseif iv == 2
-                        out = validation_classifier_wrapper(T,train,test,curr_features ,pca_perc,...
+                        out = validation_classifier_wrapper(T,train,test,features,pca_perc,...
                             is,just_spikes,rm_non_temporal,which_refs{ir});
             
                     end
@@ -219,10 +168,6 @@ for ir = 1:length(which_refs)
     [T,features,way,dur,sample,ss,durations] =  lr_mt_multitime(mt_data,[2 3]); 
     empty_class = cellfun(@isempty,T.soz_lats);
     T(empty_class,:) = [];
-
-    % Remove non-temporal
-    temporal = strcmp(T.soz_locs,'temporal');
-    T(~temporal,:) = [];
 
     % Establish HUP and MUSC as training and testing, respectively
     train  = contains(T.names,'HUP');

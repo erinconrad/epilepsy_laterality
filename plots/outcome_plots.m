@@ -110,13 +110,14 @@ for ir = 1:length(which_refs)
     
     %% Initialize figure
     figure
-    set(gcf,'position',[1 1 1000 1000])
-        tiledlayout(2,2,"TileSpacing",'tight','padding','tight')
+    set(gcf,'position',[1 1 1400 1000])
+        tiledlayout(2,3,"TileSpacing",'tight','padding','tight')
     
     % Prep stats for text
     good_bad = nan(2,2); % engel, ilae; good, bad
     prob_stats = nan(2,7); % engel, ilae; mean good, std good, mean bad, std bad, df, tstat, p
     auc_stats = nan(2,8); %engel, ilae; simple, simpleCI, complicated, complicatedCI, delong p-value, N
+    lr_stats = nan(2,7); %engel, ilae; mean left, std left, mean right, std right, df, tstat, p
     
     % Loop over outcome approaches (Engel vs ILAE), each one gets its own row
     for io = 1:2
@@ -143,7 +144,7 @@ for ir = 1:length(which_refs)
         end
 
        
-        %% A and D: Show overall outcomes
+        %% A and E: Show overall outcomes
         % find those who had surgery
         surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
         outcome_name = [which_outcome,'_yr',sprintf('%d',which_year)];
@@ -153,8 +154,8 @@ for ir = 1:length(which_refs)
         cats = unique(out_cat);
         good = arrayfun(@(x) good_outcome(char(x)),cats);
         
-        
-        
+
+
         nexttile
         histogram(out_cat,cats)
         hold on
@@ -174,9 +175,20 @@ for ir = 1:length(which_refs)
         title(sprintf('%s outcome',which_outcome_text))
         set(gca,'fontsize',15)
     
-    
+        %% B and E: Compare outcomes for left vs right temporal
+        % Just get numerical portion of outcome
+        outcome_num =  cellfun(@(x) parse_outcome_num(x,which_outcome),outcome);
+        out_text = sprintf('%s numerical portion',which_outcome_text);
+        nexttile
+        out_lat_stats = unpaired_plot(outcome_num(strcmp(T.surg_lat,'left')),outcome_num(strcmp(T.surg_lat,'right')),{'Left','Right'},out_text,'para');
+        set(gca().Children(3),'MarkerSize',10)
+        set(gca().Children(4),'MarkerSize',10)
+        title('Outcome according to side of surgery')
+        set(gca,'fontsize',15)
+        lr_stats(io,:) = [out_lat_stats.means(1) out_lat_stats.sd(1) out_lat_stats.means(2) out_lat_stats.sd(2),...
+            out_lat_stats.df out_lat_stats.tstat out_lat_stats.p];
         
-        %% B and E: See if modeled probability of concordant laterality is higher for good outcome patients
+        %% C and F: See if modeled probability of concordant laterality is higher for good outcome patients
         % Get models
         left = model.side(1).result;
         right = model.side(2).result;
@@ -280,15 +292,21 @@ for ir = 1:length(which_refs)
             sum(good_bad(2,:)),good_bad(2,1)/sum(good_bad(2,:))*100,...
             good_bad(2,2),...
             sum(good_bad(2,:)),good_bad(2,2)/sum(good_bad(2,:))*100);
+
+        fprintf(fid,[' The means of the numerical portions of the outcome scales were '...
+            'similar for patients who underwent left versus right-sided surgeries '...
+            '(Fig. 4B and 4E; Engel: <i>t</i>(%d) = %1.1f, %s; ILAE: <i>t</i>(%d) = %1.1f, %s).'],...
+            lr_stats(1,5),lr_stats(1,6),get_p_html_el(lr_stats(1,7)),...
+            lr_stats(2,5),lr_stats(2,6),get_p_html_el(lr_stats(2,7)))
         
         fprintf(fid,[' We hypothesized that patients with a good surgical outcome would have a '...
             'higher modeled probability of SOZ laterality concordant with the side of surgery. '...
             'We identified the spike rate model corresponding to the side of surgery. '...
             'Mean concordant model probability was significantly higher in patients with good Engel '...
             'outcomes (mean (SD) %1.2f (%1.2f)) than in patients with poor '...
-            'Engel outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4B), and '...
+            'Engel outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4C), and '...
             'in patients with good ILAE outcomes (%1.2f (%1.2f)) than '...
-            'in patients with poor ILAE outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4E). '...
+            'in patients with poor ILAE outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4F). '...
             'Together, these results suggest that a model trained to predict the SOZ using spike rate '...
             'asymmetry also predicts surgical outcome.'],...
             prob_stats(1,1),prob_stats(1,2),prob_stats(1,3),prob_stats(1,4),prob_stats(1,5),prob_stats(1,6),...
@@ -302,9 +320,11 @@ for ir = 1:length(which_refs)
     
     %% Add subtitles
     annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-    annotation('textbox',[0 0.4 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.34 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.67 0.9 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
+    annotation('textbox',[0 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.34 0.4 0.1 0.1],'String','E','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.67 0.4 0.1 0.1],'String','F','LineStyle','none','fontsize',25)
    
     
     
