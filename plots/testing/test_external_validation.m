@@ -12,7 +12,7 @@ rm_non_temporal = 1; % remove patients who are not temporal
 rm_wake = 0; % don't include wake segments
 rm_bad_spikes = 0;
 which_ref = 'car';
-good_outcome_only = 1;
+good_outcome_only = 0;
 which_year = 1;
 which_outcome = 'engel';
 
@@ -128,8 +128,14 @@ end
 %% Do the LOO cross validation on the HUP data - spike only model
 Ttrain = T(train,:);
 just_spikes = 1; % only spike feature
+%{
+lefts_int = classifier_wrapper(Ttrain,features,pca_perc,1,just_spikes,rm_non_temporal,[],which_ref); % 1 means left
+rights_int = classifier_wrapper(Ttrain,features,pca_perc,2,just_spikes,rm_non_temporal,[],which_ref); % 2 means right
+%}
+%
 lefts_int = classifier_wrapper(Ttrain,features(contains(features,'sleep')),pca_perc,1,just_spikes,rm_non_temporal,[],which_ref); % 1 means left
 rights_int = classifier_wrapper(Ttrain,features(contains(features,'sleep')),pca_perc,2,just_spikes,rm_non_temporal,[],which_ref); % 2 means right
+%}
 
 % Get ROC stats
 [lefts_int.XL,lefts_int.YL,~,lefts_int.AUCL] = perfcurve(lefts_int.class,lefts_int.scores,lefts_int.pos_class);
@@ -139,9 +145,14 @@ rights_int = classifier_wrapper(Ttrain,features(contains(features,'sleep')),pca_
 %% Train on the HUP data, test on MUSC - spike only model
 fprintf('\nDoing main models...');
 just_spikes = 1; 
+%{
+lefts_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,1,just_spikes,rm_non_temporal,which_ref); % 1 means left
+rights_ext = validation_classifier_wrapper(T,train,test,features,pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
+%}
+%
 lefts_ext = validation_classifier_wrapper(T,train,test,features(contains(features,'sleep')),pca_perc,1,just_spikes,rm_non_temporal,which_ref); % 1 means left
 rights_ext = validation_classifier_wrapper(T,train,test,features(contains(features,'sleep')),pca_perc,2,just_spikes,rm_non_temporal,which_ref); % 2 means right
-
+%}
 % Get ROC stats
 [lefts_ext.XL,lefts_ext.YL,~,lefts_ext.AUCL] = perfcurve(lefts_ext.class,lefts_ext.scores,lefts_ext.pos_class);
 [rights_ext.XR,rights_ext.YR,~,rights_ext.AUCR] = perfcurve(rights_ext.class,rights_ext.scores,rights_ext.pos_class);

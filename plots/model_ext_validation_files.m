@@ -244,7 +244,7 @@ for ir = 1:length(which_refs)
     nss = length(all_ss);
     
     % Initialize subsampling data
-    cv_data = nan(nss,2,ndurs,nsamples); 
+    cv_data = nan(nss,2,ndurs,nsamples);  % 2 sleep stages (wake and sleep); left vs right; which durs; which sample in dur
     ext_data = nan(nss,2,ndurs,nsamples); 
     
     % Loop over nss

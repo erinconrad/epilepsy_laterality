@@ -8,15 +8,9 @@ do_erin_test = 0;
 % Define response
 response = 'soz_lats';
 
-% restrict to given reference - new as of Nov 2023
-features = features(contains(features,which_ref));
-
-% Restrict to spike features if desired - if restricting to spikes, also
-% restrict to sleep
-spike_features = features(contains(features,'spikes'));
-
-% Restrict to spike features if desired
-%spike_features = features(contains(features,'spikes') & contains(features,which_ref));
+% Restrict to spike features if desired - in this case, restrict to a
+% specific reference
+spike_features = features(contains(features,'spikes') & contains(features,which_ref));
 
 if just_spikes == 1 || just_spikes == 2
     features = spike_features;
@@ -33,6 +27,7 @@ npts = size(T,1);
 % Remove non temporal patients if desired
 if rm_non_temporal == 1
     temporal = strcmp(T.soz_locs,'temporal');
+    assert(sum(~temporal)==0) % I should have already removed these
     T(~temporal,:) = [];
     train(~temporal) = []; test(~temporal) = [];
     npts = size(T,1);
