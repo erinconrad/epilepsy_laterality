@@ -118,6 +118,44 @@ for ir = 1:length(which_refs)
     prob_stats = nan(2,7); % engel, ilae; mean good, std good, mean bad, std bad, df, tstat, p
     auc_stats = nan(2,8); %engel, ilae; simple, simpleCI, complicated, complicatedCI, delong p-value, N
     lr_stats = nan(2,7); %engel, ilae; mean left, std left, mean right, std right, df, tstat, p
+
+    %% Get surg nums
+    surg_nums = nan(2,2); % left,right;laser,resection
+    surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
+    %{
+    surg_nums = nan(4,3); % all, left, right, bilat; all surg, resection, ablation
+    surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
+    surg_w_out = surg & cellfun(@(x) ~isempty(x),T.engel_yr1);
+    surg_nums(1,1) = sum(surg_w_out);
+    surg_nums(1,2) = sum(contains(T.surgery,'Resection')& surg_w_out);
+    surg_nums(1,3) = sum(contains(T.surgery,'Laser ablation')& surg_w_out);
+
+    surg_nums(2,1) = sum(surg_w_out & strcmp(T.soz_lats,'left'));
+    surg_nums(2,2) = sum(contains(T.surgery,'Resection')& surg_w_out& strcmp(T.soz_lats,'left'));
+    surg_nums(2,3) = sum(contains(T.surgery,'Laser ablation')& surg_w_out& strcmp(T.soz_lats,'left'));
+
+    surg_nums(3,1) = sum(surg_w_out & strcmp(T.soz_lats,'right'));
+    surg_nums(3,2) = sum(contains(T.surgery,'Resection')& surg_w_out& strcmp(T.soz_lats,'right'));
+    surg_nums(3,3) = sum(contains(T.surgery,'Laser ablation')& surg_w_out& strcmp(T.soz_lats,'right'));
+
+    surg_nums(4,1) = sum(surg_w_out & strcmp(T.soz_lats,'bilateral'));
+    surg_nums(4,2) = sum(contains(T.surgery,'Resection')& surg_w_out& strcmp(T.soz_lats,'bilateral'));
+    surg_nums(4,3) = sum(contains(T.surgery,'Laser ablation')& surg_w_out& strcmp(T.soz_lats,'bilateral'));
+    
+    
+
+
+    if ir == 1
+        fprintf(fid, [' %d patients (%d, %d, and %d clinically-designated as having left, '...
+            'right, and bilateral SOZs, respectively) underwent temporal-targeted resection or ablation. '...
+            '%d patients (%d, %d, and %d left, right, and bilateral) underwent resection, and '...
+            '%d (%d, %d, and %d left, right, and bilateral) underwent ablation.'],...
+            surg_nums(1,1),surg_nums(2,1),surg_nums(3,1),surg_nums(4,1),...
+            surg_nums(1,2),surg_nums(2,2),surg_nums(3,2),surg_nums(4,2),...
+            surg_nums(1,3),surg_nums(2,3),surg_nums(3,3),surg_nums(4,3));
+    end
+    %}
+
     
     % Loop over outcome approaches (Engel vs ILAE), each one gets its own row
     for io = 1:2
@@ -146,7 +184,7 @@ for ir = 1:length(which_refs)
        
         %% A and E: Show overall outcomes
         % find those who had surgery
-        surg = (strcmp(T.surgery,'Laser ablation') | contains(T.surgery,'Resection'));
+        
         outcome_name = [which_outcome,'_yr',sprintf('%d',which_year)];
         outcome = T.(outcome_name); 
         empty_outcome = cellfun(@isempty,outcome);
@@ -154,6 +192,12 @@ for ir = 1:length(which_refs)
         cats = unique(out_cat);
         good = arrayfun(@(x) good_outcome(char(x)),cats);
         
+        
+        if 0
+            oT = T(surg,:);
+            table(oT.names,oT.(outcome_name),oT.surgery,oT.surg_lat,oT.soz_lats,oT.surg_loc,oT.soz_locs)
+        
+        end
 
 
         nexttile
@@ -179,14 +223,35 @@ for ir = 1:length(which_refs)
         % Just get numerical portion of outcome
         outcome_num =  cellfun(@(x) parse_outcome_num(x,which_outcome),outcome);
         out_text = sprintf('%s numerical portion',which_outcome_text);
+        ablation = contains(T.surgery,'ablation');
+        resection = contains(T.surgery,'Resection');
+        surg_text = cell(length(T.surgery),1);
+        surg_text(ablation) = {'Ablation'};
+        surg_text(resection) = {'Resection'};
         nexttile
-        out_lat_stats = unpaired_plot(outcome_num(strcmp(T.surg_lat,'left')),outcome_num(strcmp(T.surg_lat,'right')),{'Left','Right'},out_text,'para');
+        %{
+        out_lat_stats = unpaired_plot_special(outcome_num(strcmp(T.surg_lat,'left')),...
+            outcome_num(strcmp(T.surg_lat,'right')),...
+            surg_text(strcmp(T.surg_lat,'left')),...
+             surg_text(strcmp(T.surg_lat,'right')),...
+             {'Left','Right'},out_text,'para');
+        %}
+        out_lat_stats = unpaired_plot(outcome_num(strcmp(T.surg_lat,'left')),...
+            outcome_num(strcmp(T.surg_lat,'right')),...
+             {'Left','Right'},out_text,'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
         title('Outcome according to side of surgery')
+        
         set(gca,'fontsize',15)
         lr_stats(io,:) = [out_lat_stats.means(1) out_lat_stats.sd(1) out_lat_stats.means(2) out_lat_stats.sd(2),...
             out_lat_stats.df out_lat_stats.tstat out_lat_stats.p];
+
+        has_out = cellfun(@(x) ~isempty(x),T.engel_yr1);
+        surg_nums(1,1) = sum(strcmp(T.surg_lat,'left')&ablation&has_out);
+        surg_nums(1,2) = sum(strcmp(T.surg_lat,'left')&resection&has_out);
+        surg_nums(2,1) = sum(strcmp(T.surg_lat,'right')&ablation&has_out);
+        surg_nums(2,2) = sum(strcmp(T.surg_lat,'right')&resection&has_out);
         
         %% C and F: See if modeled probability of concordant laterality is higher for good outcome patients
         % Get models
@@ -247,10 +312,20 @@ for ir = 1:length(which_refs)
         nexttile
         % concordant lateralty: probability of left for those with left
         % surgery; probability of right for those with right surgery
+        %
         stats = unpaired_plot(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
             {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
+        %}
+        %{
+        stats = unpaired_plot_special(concordant_lat_scores(good_outcome),...
+            concordant_lat_scores(bad_outcome),...
+            surg_text(good_outcome),...
+             surg_text(bad_outcome),...
+             {good_outcome_text,bad_outcome_text},...
+             {'Modeled probability of','concordant laterality'},'para');
+        %}
         title({'Surgery-model laterality concordance'})
         xlim([0.5 2.5])
         set(gca,'fontsize',15)
@@ -284,7 +359,7 @@ for ir = 1:length(which_refs)
         fprintf(fid,[' %d of %d (%1.1f%%) patients had good one-year Engel outcomes (Engel I), '...
             'and %d of %d (%1.1f%%) had poor Engel outcomes (Engel 2+) (Fig. 4A). '...
             '%d of %d (%1.1f%%) patients had good one-year ILAE outcomes (ILAE 1-2), and '...
-            '%d of %d (%1.1f%%) had poor ILAE outcomes (ILAE 3+) (Fig. 4C).'],good_bad(1,1),...
+            '%d of %d (%1.1f%%) had poor ILAE outcomes (ILAE 3+) (Fig. 4D).'],good_bad(1,1),...
             sum(good_bad(1,:)),good_bad(1,1)/sum(good_bad(1,:))*100,...
             good_bad(1,2),...
             sum(good_bad(1,:)),good_bad(1,2)/sum(good_bad(1,:))*100,...
@@ -297,7 +372,13 @@ for ir = 1:length(which_refs)
             'similar for patients who underwent left versus right-sided surgeries '...
             '(Fig. 4B and 4E; Engel: <i>t</i>(%d) = %1.1f, %s; ILAE: <i>t</i>(%d) = %1.1f, %s).'],...
             lr_stats(1,5),lr_stats(1,6),get_p_html_el(lr_stats(1,7)),...
-            lr_stats(2,5),lr_stats(2,6),get_p_html_el(lr_stats(2,7)))
+            lr_stats(2,5),lr_stats(2,6),get_p_html_el(lr_stats(2,7)));
+
+        fprintf(fid,[' Left-sided surgeries were disproportionately ablations (%d ablations vs %d '...
+            'resections), and right-sided surgeries were more often resections ('...
+            '%d ablations vs %d resections).'],...
+            surg_nums(1,1),surg_nums(1,2),surg_nums(2,1),surg_nums(2,2));
+        
         
         fprintf(fid,[' We hypothesized that patients with a good surgical outcome would have a '...
             'higher modeled probability of SOZ laterality concordant with the side of surgery. '...
@@ -315,7 +396,7 @@ for ir = 1:length(which_refs)
             get_p_html_el(prob_stats(2,7)));
         
       
-        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S4 and S5).</p>']);
+        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S6 and S7).</p>']);
     end
     
     %% Add subtitles
@@ -331,9 +412,9 @@ for ir = 1:length(which_refs)
     if ir == 1
         print(gcf,[plot_folder,'Fig4'],'-dpng')
     elseif ir == 2
-        print(gcf,[plot_folder,'FigS4'],'-dpng')
+        print(gcf,[plot_folder,'FigS6'],'-dpng')
     elseif ir == 3
-        print(gcf,[plot_folder,'FigS5'],'-dpng')
+        print(gcf,[plot_folder,'FigS7'],'-dpng')
     end
     
     

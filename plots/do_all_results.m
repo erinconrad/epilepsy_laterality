@@ -56,16 +56,18 @@ end
 
 % Table S1 is feature description table
 
-% Figure 2
-combined_univariate_fmri_plots
-
 % Figure S1
 correlation_figure
 
-% Figure 3 and Fig S2 and S3
+% Figure 2 and Fig S2
+combined_univariate_fmri_plots
+
+
+
+% Figure 3 and Fig S3, S4, S5
 model_plots
 
-% Figure 4 and Fig S4 and S5
+% Figure 4 and Fig S6 and S7
 outcome_plots
 
 close all
