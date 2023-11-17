@@ -20,8 +20,15 @@ for ia = 1:length(which_refs)
     out = load([plot_folder,sprintf('ext_models_%s.mat',which_refs{ia})]);
     out = out.all;
 
-    % Loop over all patients vs good outcome HUP patients
-    for io = 1:2
+    % If first reference, Loop over all patients vs good outcome HUP
+    % patients, otherwise just do all patients
+    if ia == 1
+        no = 2;
+    else
+        no = 1;
+    end
+
+    for io = 1:no
 
     
         model = out.approach(io).model;
