@@ -353,6 +353,17 @@ for ir = 1:length(which_refs)
         
     
     end
+
+    if 0
+        laser = strcmp(T.surgery,'Laser ablation');
+        resection = contains(T.surgery,'Resection');
+        figure
+        type_stats = unpaired_plot(concordant_lat_scores(laser),concordant_lat_scores(resection),...
+            {'Laser ablation','Resection'},{'Modeled probability of','concordant laterality'},'para');
+        set(gca().Children(3),'MarkerSize',10)
+        set(gca().Children(4),'MarkerSize',10)
+
+    end
     
     %% Do text
     if ir == 1
@@ -410,11 +421,14 @@ for ir = 1:length(which_refs)
     
     
     if ir == 1
-        print(gcf,[plot_folder,'Fig4'],'-dpng')
+        %print(gcf,[plot_folder,'Fig4'],'-dpng')
+        print(gcf,[plot_folder,'Fig4'],'-dtiff')
     elseif ir == 2
-        print(gcf,[plot_folder,'FigS6'],'-dpng')
+        %print(gcf,[plot_folder,'FigS6'],'-dpng')
+        print(gcf,[plot_folder,'FigS6'],'-dtiff')
     elseif ir == 3
-        print(gcf,[plot_folder,'FigS7'],'-dpng')
+        %print(gcf,[plot_folder,'FigS7'],'-dpng')
+        print(gcf,[plot_folder,'FigS7'],'-dtiff')
     end
     
     

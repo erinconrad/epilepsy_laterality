@@ -90,7 +90,7 @@ for ia = 1:length(which_refs)
                 model(2).val(1).side(1).result.AUC,model(2).val(1).side(2).result.AUC,...
                 model(3).val(1).side(1).result.AUC,model(3).val(1).side(2).result.AUC);
         elseif ia == 1 && io == 2
-            fprintf(sfid,['We again tested the ability of interictal features predict SOZ laterality in unseen patients, '...
+            fprintf(sfid,['We again tested the ability of interictal features to predict SOZ laterality in unseen patients, '...
                 'now restricting the unilateral patients in the HUP dataset to be those with Engel 1 surgical outcomes. '...
                 'The AUCs of the ROC of the left- and right-sided internal cross-validation models trained on all features were %1.2f '...
                 'and %1.2f, respectively (Fig. S3A). A model '...
@@ -525,13 +525,17 @@ for ia = 1:length(which_refs)
         
         
         if ia == 1 && io == 1
-            print(gcf,[plot_folder,'Fig3'],'-dpng')
+            %print(gcf,[plot_folder,'Fig3'],'-dpng')
+            print(gcf,[plot_folder,'Fig3'],'-dtiff')
         elseif ia == 1 && io == 2
-            print(gcf,[plot_folder,'FigS3'],'-dpng')
+            %print(gcf,[plot_folder,'FigS3'],'-dpng')
+            print(gcf,[plot_folder,'FigS3'],'-dtiff')
         elseif ia == 2
-            print(gcf,[plot_folder,'FigS4'],'-dpng')
+            %print(gcf,[plot_folder,'FigS4'],'-dpng')
+            print(gcf,[plot_folder,'FigS4'],'-dtiff')
         elseif ia == 3
-            print(gcf,[plot_folder,'FigS5'],'-dpng')
+            %print(gcf,[plot_folder,'FigS5'],'-dpng')
+            print(gcf,[plot_folder,'FigS5'],'-dtiff')
         end
     
     end

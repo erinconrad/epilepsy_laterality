@@ -472,7 +472,8 @@ annotation('textbox',[0.53 0.905 0.1 0.1],'String','B','LineStyle','none','fonts
 annotation('textbox',[0 0.41 0.1 0.1],'String','C','LineStyle','none','fontsize',20)
 annotation('textbox',[0.53 0.41 0.1 0.1],'String','D','LineStyle','none','fontsize',20)
 
-print(gcf,[plot_folder,'FigS1'],'-dpng')
+%print(gcf,[plot_folder,'FigS1'],'-dpng')
+print(gcf,[plot_folder,'FigS1'],'-dtiff')
 
 
 end

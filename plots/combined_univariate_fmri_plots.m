@@ -333,7 +333,8 @@ for ig = 1:2
     if ig == 2
         annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
         annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-        print(gcf,[plot_folder,'FigS2'],'-dpng')
+        %print(gcf,[plot_folder,'FigS2'],'-dpng')
+        print(gcf,[plot_folder,'FigS2'],'-dtiff')
         return
     end
 
@@ -585,7 +586,8 @@ for ig = 1:2
     annotation('textbox',[0.5 0.33 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
     
     
-    print(gcf,[plot_folder,'Fig2'],'-dpng')
+    %print(gcf,[plot_folder,'Fig2'],'-dpng')
+    print(gcf,[plot_folder,'Fig2'],'-dtiff')
 
 end
 
