@@ -11,7 +11,7 @@ laterality project.
 do_full_pipeline = 0; 
 
 % End users should not change this
-doing_from_github = 1;
+doing_from_github = 0;
 
 %% Get file locs
 locations = epilepsy_laterality_locs;
