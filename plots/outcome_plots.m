@@ -313,7 +313,7 @@ for ir = 1:length(which_refs)
         % concordant lateralty: probability of left for those with left
         % surgery; probability of right for those with right surgery
         %
-        stats = unpaired_plot(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
+        stats = unpaired_plot_tle(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
             {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
