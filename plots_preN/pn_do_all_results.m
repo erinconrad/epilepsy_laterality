@@ -72,5 +72,3 @@ outcome_plots
 
 close all
 
-fprintf('\ndone\n')
-
