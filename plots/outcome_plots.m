@@ -110,8 +110,8 @@ for ir = 1:length(which_refs)
     
     %% Initialize figure
     figure
-    set(gcf,'position',[1 1 1000 1000])
-        tiledlayout(2,2,"TileSpacing",'tight','padding','tight')
+    set(gcf,'position',[1 1 1400 1000])
+        tiledlayout(2,3,"TileSpacing",'tight','padding','tight')
     
     % Prep stats for text
     good_bad = nan(2,2); % engel, ilae; good, bad
@@ -228,7 +228,7 @@ for ir = 1:length(which_refs)
         surg_text = cell(length(T.surgery),1);
         surg_text(ablation) = {'Ablation'};
         surg_text(resection) = {'Resection'};
-        %nexttile
+        nexttile
         %{
         out_lat_stats = unpaired_plot_special(outcome_num(strcmp(T.surg_lat,'left')),...
             outcome_num(strcmp(T.surg_lat,'right')),...
@@ -236,14 +236,14 @@ for ir = 1:length(which_refs)
              surg_text(strcmp(T.surg_lat,'right')),...
              {'Left','Right'},out_text,'para');
         %}
-        out_lat_stats = unpaired_plot_tle(outcome_num(strcmp(T.surg_lat,'left')),...
+        out_lat_stats = unpaired_plot(outcome_num(strcmp(T.surg_lat,'left')),...
             outcome_num(strcmp(T.surg_lat,'right')),...
-             {'Left','Right'},out_text,'para',1);
-        %set(gca().Children(3),'MarkerSize',10)
-        %set(gca().Children(4),'MarkerSize',10)
-        %title('Outcome according to side of surgery')
+             {'Left','Right'},out_text,'para');
+        set(gca().Children(3),'MarkerSize',10)
+        set(gca().Children(4),'MarkerSize',10)
+        title('Outcome according to side of surgery')
         
-        %set(gca,'fontsize',15)
+        set(gca,'fontsize',15)
         lr_stats(io,:) = [out_lat_stats.means(1) out_lat_stats.sd(1) out_lat_stats.means(2) out_lat_stats.sd(2),...
             out_lat_stats.df out_lat_stats.tstat out_lat_stats.p];
 
@@ -313,7 +313,7 @@ for ir = 1:length(which_refs)
         % concordant lateralty: probability of left for those with left
         % surgery; probability of right for those with right surgery
         %
-        stats = unpaired_plot_tle(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
+        stats = unpaired_plot(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
             {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
@@ -368,9 +368,9 @@ for ir = 1:length(which_refs)
     %% Do text
     if ir == 1
         fprintf(fid,[' %d of %d (%1.1f%%) patients had good one-year Engel outcomes (Engel I), '...
-            'and %d of %d (%1.1f%%) had poor Engel outcomes (Engel 2+) (Fig. 6A). '...
+            'and %d of %d (%1.1f%%) had poor Engel outcomes (Engel 2+) (Fig. 4A). '...
             '%d of %d (%1.1f%%) patients had good one-year ILAE outcomes (ILAE 1-2), and '...
-            '%d of %d (%1.1f%%) had poor ILAE outcomes (ILAE 3+) (Fig. 6C).'],good_bad(1,1),...
+            '%d of %d (%1.1f%%) had poor ILAE outcomes (ILAE 3+) (Fig. 4D).'],good_bad(1,1),...
             sum(good_bad(1,:)),good_bad(1,1)/sum(good_bad(1,:))*100,...
             good_bad(1,2),...
             sum(good_bad(1,:)),good_bad(1,2)/sum(good_bad(1,:))*100,...
@@ -381,7 +381,7 @@ for ir = 1:length(which_refs)
 
         fprintf(fid,[' The means of the numerical portions of the outcome scales were '...
             'similar for patients who underwent left versus right-sided surgeries '...
-            '(Engel: <i>t</i>(%d) = %1.1f, %s; ILAE: <i>t</i>(%d) = %1.1f, %s).'],...
+            '(Fig. 4B and 4E; Engel: <i>t</i>(%d) = %1.1f, %s; ILAE: <i>t</i>(%d) = %1.1f, %s).'],...
             lr_stats(1,5),lr_stats(1,6),get_p_html_el(lr_stats(1,7)),...
             lr_stats(2,5),lr_stats(2,6),get_p_html_el(lr_stats(2,7)));
 
@@ -396,9 +396,9 @@ for ir = 1:length(which_refs)
             'We identified the spike rate model corresponding to the side of surgery. '...
             'Mean concordant model probability was significantly higher in patients with good Engel '...
             'outcomes (mean (SD) %1.2f (%1.2f)) than in patients with poor '...
-            'Engel outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 6B), and '...
+            'Engel outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4C), and '...
             'in patients with good ILAE outcomes (%1.2f (%1.2f)) than '...
-            'in patients with poor ILAE outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 6D). '...
+            'in patients with poor ILAE outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4F). '...
             'Together, these results suggest that a model trained to predict the SOZ using spike rate '...
             'asymmetry also predicts surgical outcome.'],...
             prob_stats(1,1),prob_stats(1,2),prob_stats(1,3),prob_stats(1,4),prob_stats(1,5),prob_stats(1,6),...
@@ -407,26 +407,28 @@ for ir = 1:length(which_refs)
             get_p_html_el(prob_stats(2,7)));
         
       
-        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S5 and S6).</p>']);
+        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S6 and S7).</p>']);
     end
     
     %% Add subtitles
     annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-    annotation('textbox',[0 0.4 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
-
+    annotation('textbox',[0.34 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.67 0.9 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
+    annotation('textbox',[0 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.34 0.4 0.1 0.1],'String','E','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.67 0.4 0.1 0.1],'String','F','LineStyle','none','fontsize',25)
+   
     
     
     if ir == 1
         %print(gcf,[plot_folder,'Fig4'],'-dpng')
-        print(gcf,[plot_folder,'Fig6'],'-dtiff')
+        print(gcf,[plot_folder,'Fig4'],'-dtiff')
     elseif ir == 2
         %print(gcf,[plot_folder,'FigS6'],'-dpng')
-        print(gcf,[plot_folder,'FigS5'],'-dtiff')
+        print(gcf,[plot_folder,'FigS6'],'-dtiff')
     elseif ir == 3
         %print(gcf,[plot_folder,'FigS7'],'-dpng')
-        print(gcf,[plot_folder,'FigS6'],'-dtiff')
+        print(gcf,[plot_folder,'FigS7'],'-dtiff')
     end
     
     

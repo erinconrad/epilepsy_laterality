@@ -11,7 +11,7 @@ laterality project.
 do_full_pipeline = 0; 
 
 % End users should not change this
-doing_from_github = 1;
+doing_from_github = 0;
 
 %% Get file locs
 locations = epilepsy_laterality_locs;
@@ -71,6 +71,4 @@ model_plots
 outcome_plots
 
 close all
-
-fprintf('\ndone\n')
 
