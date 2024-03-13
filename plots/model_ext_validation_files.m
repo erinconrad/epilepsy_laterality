@@ -35,14 +35,15 @@ for ir = 1:length(which_refs)
 
     % Get the AI features
     if rm_wake == 1
-        [T,features] =  lr_mt(mt_data,3); % the 3 refers to only looking at sleep
+        [T,features,~,sleep_info] =  lr_mt(mt_data,3); % the 3 refers to only looking at sleep
     else
-        [T,features] =  lr_mt(mt_data,[2 3]); % wake and sleep
+        [T,features,~,sleep_info] =  lr_mt(mt_data,[2 3]); % wake and sleep
     end
 
     % Remove non-temporal
     temporal = strcmp(T.soz_locs,'temporal');
     T(~temporal,:) = [];
+    sleep_info(~temporal,:) = [];
 
     %% Main analysis and good outcome analysis
     for ia = 1:2
@@ -51,7 +52,7 @@ for ir = 1:length(which_refs)
         % Remove those without a response (soz_lats is the response variable)
         empty_class = cellfun(@isempty,T.soz_lats);
         T(empty_class,:) = [];
-
+        sleep_info(empty_class,:) = [];
         
 
         % If doing good outcome analysis, restrict here
@@ -97,6 +98,7 @@ for ir = 1:length(which_refs)
             % allow if (MUSC) or (bilateral) or (unilateral and good outcome)
             allowed_outcome = contains(T.names,'MP')|good_outcome_unilat|bilat;
             T(~allowed_outcome,:) = [];
+            sleep_info(~allowed_outcome,:) = [];
             approach(ia).nums.hup = sum(hup);
             approach(ia).nums.hup_left = sum(hup_left);
             approach(ia).nums.hup_right = sum(hup_right);
@@ -104,6 +106,7 @@ for ir = 1:length(which_refs)
             approach(ia).nums.hup_good_outcome_unilat = sum(hup_good_outcome_unilat);
             approach(ia).nums.hup_good_outcome_left = sum(hup_good_outcome_left);
             approach(ia).nums.hup_good_outcome_right = sum(hup_good_outcome_right);
+            approach(ia).sleep_info = sleep_info;
             
         end
         

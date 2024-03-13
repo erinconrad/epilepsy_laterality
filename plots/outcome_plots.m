@@ -32,6 +32,10 @@ for ir = 1:length(which_refs)
         fprintf(fid,'<br><u><i>Concordance between spike-predicted laterality and surgical laterality is higher for patients with good surgical outcomes</i></u></br>');
         
       
+        % also prep outcome model supplemental figure
+        omFig = figure;
+        set(omFig,'position',[1 1 1000 450])
+        omT = tiledlayout(omFig,1,2,'TileSpacing','tight','Padding','tight');
     end
     
     %% Load the model file
@@ -109,13 +113,13 @@ for ir = 1:length(which_refs)
 
     
     %% Initialize figure
-    figure
-    set(gcf,'position',[1 1 1400 1000])
-        tiledlayout(2,3,"TileSpacing",'tight','padding','tight')
+    mainFig = figure;
+    set(mainFig,'position',[1 1 1400 1000])
+    mainT = tiledlayout(mainFig,2,3,"TileSpacing",'tight','padding','tight');
     
     % Prep stats for text
     good_bad = nan(2,2); % engel, ilae; good, bad
-    prob_stats = nan(2,7); % engel, ilae; mean good, std good, mean bad, std bad, df, tstat, p
+    prob_stats = nan(2,8); % engel, ilae; mean good, std good, mean bad, std bad, df, tstat, p, auc
     auc_stats = nan(2,8); %engel, ilae; simple, simpleCI, complicated, complicatedCI, delong p-value, N
     lr_stats = nan(2,7); %engel, ilae; mean left, std left, mean right, std right, df, tstat, p
 
@@ -200,7 +204,7 @@ for ir = 1:length(which_refs)
         end
 
 
-        nexttile
+        nexttile(mainT)
         histogram(out_cat,cats)
         hold on
         yl = ylim;
@@ -228,7 +232,7 @@ for ir = 1:length(which_refs)
         surg_text = cell(length(T.surgery),1);
         surg_text(ablation) = {'Ablation'};
         surg_text(resection) = {'Resection'};
-        nexttile
+        nexttile(mainT)
         %{
         out_lat_stats = unpaired_plot_special(outcome_num(strcmp(T.surg_lat,'left')),...
             outcome_num(strcmp(T.surg_lat,'right')),...
@@ -307,14 +311,52 @@ for ir = 1:length(which_refs)
                 'VariableNames',{'Name','Outcome','Surgery','Lat','Left score',...
                 'Righ score','concordant score'})
         end
+
+        %% Outcome prediction model
+        % For revision, attempt to make a model to predict good or bad
+        % outcome using these probabilities
+        X = concordant_lat_scores;
+        Y = nan(length(outcome_bin),1);
+        Y(strcmp(outcome_bin,'good')) = 1; Y(strcmp(outcome_bin,'bad')) = 0;
+        anynan = any(isnan([X,Y]),2);
+        X(anynan) = []; Y(anynan) = [];
+
+        % Number of observations
+        N = length(Y);
+        
+        % Initialize variables to store predictions and observed outcomes
+        predicted_probs = zeros(N, 1);
+        observed = zeros(N, 1);
+        
+        % Leave-one-out cross-validation
+        for i = 1:N
+            % Split data into training and test sets
+            X_train = X([1:i-1, i+1:end]);
+            Y_train = Y([1:i-1, i+1:end]);
+            X_test = X(i);
+            Y_test = Y(i);
+            
+            % Fit logistic regression model
+            mdl = fitglm(X_train, Y_train, 'Distribution', 'binomial', 'Link', 'logit');
+            
+            % Predict on test set
+            predicted_probs(i) = predict(mdl, X_test);
+            observed(i) = Y_test;
+        end
+        
+        % Compute ROC curve and AUC
+        [fpr, tpr, thresholds, auc] = perfcurve(observed, predicted_probs, 1);
+
+        
     
     
-        nexttile
+        nexttile(mainT)
         % concordant lateralty: probability of left for those with left
         % surgery; probability of right for those with right surgery
         %
+
         stats = unpaired_plot(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
-            {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
+        {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
         %}
@@ -338,8 +380,11 @@ for ir = 1:length(which_refs)
     
         % engel, ilae; mean good, std good, mean bad, std bad, df, tstat, p
         prob_stats(io,:) = [stats.means(1) stats.sd(1) stats.means(2) stats.sd(2),...
-            stats.df stats.tstat stats.p];
+            stats.df stats.tstat stats.p,auc];
     
+
+        
+        
         % investigating the patients with high predicted concordant
         % laterality but poor outcome
         if 0
@@ -348,9 +393,19 @@ for ir = 1:length(which_refs)
         % HUP138 (0.81) had a high modeled
         % probability of concordant laterality but poor outcome. They
         % had an ablation, and no repeat surgical evaluation. 
-    
-    
-        
+
+        if ir == 1
+            nexttile(omT)
+            l=plot(fpr, tpr,'k','linewidth',2);
+            hold on
+            plot([0 1],[0 1],'k--','linewidth',2)
+            xlabel('False Positive Rate');
+            ylabel('True Positive Rate');
+            legend(l,sprintf('AUC = %1.2f',auc),'location','southeast')
+            title(sprintf('Model predictions of %s outcome',which_outcome_text));
+            set(gca,'fontsize',15)
+            
+        end
     
     end
 
@@ -399,38 +454,50 @@ for ir = 1:length(which_refs)
             'Engel outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4C), and '...
             'in patients with good ILAE outcomes (%1.2f (%1.2f)) than '...
             'in patients with poor ILAE outcomes (%1.2f (%1.2f)) (<i>t</i>(%d) = %1.1f, %s) (Fig. 4F). '...
+            'Finally, we measured how well modeled TLE laterality predictions predicted '...
+            'surgical outcome in unseen patients. We trained a logistic regression model with to '...
+            'predict good or bad surgical outcome using the modeled probability of SOZ '...
+            'laterality concordant with the side of surgery as the model input. '...
+            'The performance of the model validated using leave-one-out classification had '...
+            'an AUC of %1.2f for predicting Engel outcome and %1.2f for predicting ILAE outcome (Fig. S6). '...
             'Together, these results suggest that a model trained to predict the SOZ using spike rate '...
-            'asymmetry also predicts surgical outcome.'],...
+            'asymmetry is also associated with surgical outcome.'],...
             prob_stats(1,1),prob_stats(1,2),prob_stats(1,3),prob_stats(1,4),prob_stats(1,5),prob_stats(1,6),...
             get_p_html_el(prob_stats(1,7)),...
             prob_stats(2,1),prob_stats(2,2),prob_stats(2,3),prob_stats(2,4),prob_stats(2,5),prob_stats(2,6),...
-            get_p_html_el(prob_stats(2,7)));
+            get_p_html_el(prob_stats(2,7)),...
+            prob_stats(1,8),prob_stats(2,8));
         
       
-        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S6 and S7).</p>']);
+        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S7 and S8).</p>']);
     end
     
     %% Add subtitles
-    annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.34 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.67 0.9 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-    annotation('textbox',[0 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.34 0.4 0.1 0.1],'String','E','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.67 0.4 0.1 0.1],'String','F','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0.34 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0.67 0.9 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0.34 0.4 0.1 0.1],'String','E','LineStyle','none','fontsize',25)
+    annotation(mainFig,'textbox',[0.67 0.4 0.1 0.1],'String','F','LineStyle','none','fontsize',25)
    
     
     
     if ir == 1
         %print(gcf,[plot_folder,'Fig4'],'-dpng')
-        print(gcf,[plot_folder,'Fig4'],'-dtiff')
+        print(mainFig,[plot_folder,'Fig4'],'-dtiff')
+
+        annotation(omFig,'textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
+        annotation(omFig,'textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+        print(omFig,[plot_folder,'FigS6'],'-dtiff')
+        close(omFig)
     elseif ir == 2
         %print(gcf,[plot_folder,'FigS6'],'-dpng')
-        print(gcf,[plot_folder,'FigS6'],'-dtiff')
+        print(mainFig,[plot_folder,'FigS7'],'-dtiff')
     elseif ir == 3
         %print(gcf,[plot_folder,'FigS7'],'-dpng')
-        print(gcf,[plot_folder,'FigS7'],'-dtiff')
+        print(mainFig,[plot_folder,'FigS8'],'-dtiff')
     end
-    
+    close(mainFig)
     
 end
 

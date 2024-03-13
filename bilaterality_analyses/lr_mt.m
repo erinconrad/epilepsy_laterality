@@ -1,4 +1,4 @@
-function [T,features,Ts] =  lr_mt(mt_data,which_sleep_stages,rm_bad_spikes)
+function [T,features,Ts,sleep_info] =  lr_mt(mt_data,which_sleep_stages,rm_bad_spikes)
 
 %{
 This function takes a dataset (mt_data) containing electrode-contact-level
@@ -326,6 +326,8 @@ all_feat = table2array(Ts(:,size(Ts,2)-nfeatures+1:end));
 %% Prep  output table
 % First, remove those rows missing all columns
 T = Ts(~all_missing & ~most_disconnected & ~bad_spikes,:);
+sleep_info = mt_data.all_n_wake_sleep_connected;
+sleep_info = sleep_info(~all_missing & ~most_disconnected & ~bad_spikes,:);
 
 %% Look for remaining nans
 % The following steps demonstrate the reasons for nan values. I believe I
