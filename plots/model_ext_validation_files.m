@@ -59,6 +59,7 @@ for ir = 1:length(which_refs)
         if ia == 1 % all patients
             approach(ia).type = 'all patients';
             approach(ia).nums= [];
+            approach(ia).sleep_info = [];
             
         else % good outcome only
             approach(ia).type = 'For HUP patients, only allow bilateral or unilateral good outcome (Engel 1)';
