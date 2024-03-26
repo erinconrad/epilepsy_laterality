@@ -23,6 +23,7 @@ freq_names = {'delta','theta','alpha','beta','gamma','broadband'};
 %% Load Manual validation file (in the github project)
 T = readtable('Manual validation.xlsx','Sheet','outcome');
 sT = readtable('Manual validation.xlsx','Sheet','EDF pipeline');
+%sozT = readtable('Manual validation.xlsx','Sheet','SOZ');
 
 %% get variables of interest
 all_missing = cellfun(@isempty,mt_data.all_spikes(:,1,1));
@@ -76,6 +77,8 @@ soz_lats(cellfun(@isempty,soz_lats)) = {''};
 soz_locs(cellfun(@isempty,soz_locs)) = {''};
 soz_lats(strcmp(soz_lats,'diffuse')) = {'bilateral'}; % make diffuse laterality be the same as bilateral
 soz_locs(contains(soz_locs,'temporal')) = {'temporal'}; % make any temporal be temporal
+
+%% Get more specific soz localization
 
 %% Consensus ablation or resection lat
 surg_lat = cell(npts,1);

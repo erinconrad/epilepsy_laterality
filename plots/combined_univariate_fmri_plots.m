@@ -71,11 +71,11 @@ for ig = 1:2
     %% Initialize figure
     if ig == 1
         figure   
-        set(gcf,'position',[25 235 1400 900])
-        t = tiledlayout(2,4,"TileSpacing",'tight','padding','tight');
+        set(gcf,'position',[25 235 1400 550])
+        t = tiledlayout(1,4,"TileSpacing",'tight','padding','tight');
     elseif ig ==2
         figure   
-        set(gcf,'position',[25 235 1400 450])
+        set(gcf,'position',[25 235 1400 550])
         t = tiledlayout(1,4,"TileSpacing",'tight','padding','tight');
     end
 
@@ -131,6 +131,10 @@ for ig = 1:2
     nfeatures = length(allowed_features);
     feature_p_val = nan(nfeatures,1);
     feature_eta2= nan(nfeatures,1);
+    feature_f = nan(nfeatures,1);
+    feature_dfs1 = nan(nfeatures,1);
+    feature_dfs2 = nan(nfeatures,1);
+    stats_text = cell(nfeatures,1);
     
     % Loop over features
     for i = 1:nfeatures
@@ -138,6 +142,10 @@ for ig = 1:2
         % get p value and eta 2
         [feature_p_val(i),tbl] = anova1(T.(allowed_features{i}),T.(response),'off');
         feature_eta2(i) = tbl{2,2}/(tbl{2,2}+tbl{3,2});
+        feature_f(i) = tbl{2,5};
+        feature_dfs1(i) = tbl{2,3};
+        feature_dfs2(i) = tbl{3,3};
+        stats_text{i} = sprintf('F(%d,%d) = %1.1f',tbl{2,3},tbl{3,3},tbl{2,5});
         
     end
     feature_p_val(isnan(feature_p_val)) = 1;
@@ -170,36 +178,60 @@ for ig = 1:2
     axt.XTickLabelRotation = 45;
     %}
     title({'Effect size (\eta^2_p) to distinguish left/right/bilateral SOZ'})
-    set(gca,'fontsize',15)
+    set(gca,'fontsize',18)
     
     if ig == 1
+        assert(strcmp(allowed_features{I(1)},'spikes bipolar sleep'))
+        assert(feature_p_val(I(1))<0.001)
         fprintf(fid,[' We ranked '...
             'features in descending order by effect size (&#951;<sup>2</sup>) at '...
             'separating the three SOZ lateralities (Fig. 2A). '...
             'The top-ranked AI '...
             'features involved spike rates and '...
-            'relative entropy, and were predominantly in sleep. ']);
+            'relative entropy, and were predominantly in sleep. '...
+            'For example, spike rates in sleep (bipolar reference) '...
+            'had the highest effect size (ANOVA: F(%d,%d) = %1.1f, '...
+            '<i>p</i> < 0.001, <i>q</i> = %1.3f, &#951;<sup>2</sup> = %1.2f). '...
+            'Table S3 shows the corresponding statistics for the features '...
+            'with the 30 highest effect sizes. '],...
+            feature_dfs1(I(1)),feature_dfs2(I(1)),...
+            feature_f(I(1)),qvalues(I(1)),feature_eta2(I(1)));
     else
         fprintf(sfid,[' Again, the top-ranked AI '...
             'features involved spike rates and '...
             'relative entropy (Fig. S2A). ']);
     end
+
+    % Also prep a supplemental table showing the top ranked features
+    
+    mcT = table(allowed_features(I),...
+        stats_text(I),feature_eta2(I),feature_p_val(I),qvalues(I), ...
+        'VariableNames',{'Feature','F-statistic','Eta2','p-value','q-value'});
+    if ig == 1
+        writetable(mcT(1:30,:),[plot_folder,'TableS3.csv'])
+    end
+
     
     %% Univariate analyses for different comparisons
     feature_p_val = nan(nfeatures,2);
     feature_eta2= nan(nfeatures,2);
+    stats_text = cell(nfeatures,2);
+    
     for i = 1:nfeatures
         curr_feat = T.(allowed_features{i});
     
         % Just separate each from bilateral
         if just_sep_bilat
-            [~,feature_p_val(i,1)] = ttest2(curr_feat(strcmp(T.(response),'left')),curr_feat(strcmp(T.(response),'bilateral')));
-            [~,feature_p_val(i,2)] = ttest2(curr_feat(strcmp(T.(response),'right')),curr_feat(strcmp(T.(response),'bilateral')));
+            [~,feature_p_val(i,1),~,test_stats1] = ttest2(curr_feat(strcmp(T.(response),'left')),curr_feat(strcmp(T.(response),'bilateral')));
+            [~,feature_p_val(i,2),~,test_stats2] = ttest2(curr_feat(strcmp(T.(response),'right')),curr_feat(strcmp(T.(response),'bilateral')));
         
             dT = meanEffectSize(curr_feat(strcmp(T.(response),'left')),curr_feat(strcmp(T.(response),'bilateral')),Effect="cohen");
             feature_eta2(i,1) = dT.Effect;
             dT = meanEffectSize(curr_feat(strcmp(T.(response),'right')),curr_feat(strcmp(T.(response),'bilateral')),Effect="cohen");
             feature_eta2(i,2) = dT.Effect;
+            stats_text{i,1} = sprintf('t(%d) = %1.1f',test_stats1.df,test_stats1.tstat);
+            stats_text{i,2} = sprintf('t(%d) = %1.1f',test_stats2.df,test_stats2.tstat);
+            
         else
             [~,feature_p_val(i,1)] = ttest2(curr_feat(strcmp(T.(response),'left')),curr_feat(strcmp(T.(response),'right')|strcmp(T.(response),'bilateral')));
             [~,feature_p_val(i,2)] = ttest2(curr_feat(strcmp(T.(response),'right')),curr_feat(strcmp(T.(response),'left')|strcmp(T.(response),'bilateral')));
@@ -290,13 +322,13 @@ for ig = 1:2
     
     %xticklabels([])
     if just_sep_bilat
-        legend([pl pr],{'Left vs bilateral','Right vs bilateral'},'location','northeast','fontsize',15)
+        legend([pl pr],{'Left vs bilateral','Right vs bilateral'},'location','northeast','fontsize',17)
     else
-        legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',15)
+        legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',17)
     end
     
-    set(ax1,'fontsize',15); set(ax2,'fontsize',15)
-    ylabel(ax1,'|Cohen''s {\it d}|','color','k','fontsize',15)
+    set(ax1,'fontsize',20); set(ax2,'fontsize',20)
+    ylabel(ax1,'|Cohen''s {\it d}|','color','k','fontsize',20)
     %{
     title(tt,{'Effect sizes (Cohen''s {\it d}) to distinguish specific laterality'},...
         'fontsize',20,'fontweight','bold')
@@ -304,7 +336,7 @@ for ig = 1:2
     annotation('textbox', [0.6 0.895 0.1 0.1],...
         'String', 'Effect sizes (Cohen''s {\it d}) to distinguish specific laterality', ...
         'EdgeColor', 'none', ...
-        'fontweight','bold','fontsize',17,...
+        'fontweight','bold','fontsize',20,...
         'HorizontalAlignment', 'left')
     
     if ig == 1
@@ -313,7 +345,10 @@ for ig = 1:2
             'Spike features significantly distinguished left from bilateral SOZs.'...
             ' For distinguishing '...
             'right-sided SOZ, several other features performed best (though none were significant'...
-            ' after correcting for the false discovery rate). This suggests that right-sided SOZs '...
+            ' after correcting for the false discovery rate). Tables S4 and S5 '...
+            'show the effect sizes and significance levels for the features '...
+            'with the highest effect sizes at differentiating left from bilateral '...
+            'SOZs and right from bilateral SOZs, respectively. This suggests that right-sided SOZs '...
             'are harder to distinguish than left-sided SOZs in our dataset. '...
             'Several interictal features were highly correlated, including spikes and relative '...
             'entropy (see Fig. S1 and Supplemental Results).'...
@@ -330,12 +365,29 @@ for ig = 1:2
     end
 
     % exit if ig == 2
-    if ig == 2
+    if ig == 1
+        annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
+        annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+        %print(gcf,[plot_folder,'FigS2'],'-dpng')
+        print(gcf,[plot_folder,'Fig2'],'-dtiff')
+    elseif ig == 2
         annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
         annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
         %print(gcf,[plot_folder,'FigS2'],'-dpng')
         print(gcf,[plot_folder,'FigS2'],'-dtiff')
         return
+    end
+
+    % Also prep supplemental tables showing the top ranked features
+    lT = table(allowed_features(I1),...
+        stats_text(I1,1),feature_eta2(I1,1),feature_p_val(I1,1),qvalues1(I1), ...
+        'VariableNames',{'Feature','T-statistic','Cohen d','p-value','q-value'});
+    rT = table(allowed_features(I2),...
+        stats_text(I2,2),feature_eta2(I2,2),feature_p_val(I2,2),qvalues2(I2), ...
+        'VariableNames',{'Feature','T-statistic','Cohen d','p-value','q-value'});
+    if ig == 1
+        writetable(lT(1:30,:),[plot_folder,'TableS4.csv'])
+        writetable(rT(1:30,:),[plot_folder,'TableS5.csv'])
     end
 
     
@@ -500,9 +552,11 @@ for ig = 1:2
     % Set the mt_mask to a special value
     mni_brain(mt_mask==1) = nan;
     
-    
+    fmriF = figure;
+    set(fmriF,'position',[25 235 1400 450])
+    ft = tiledlayout(1,4,"TileSpacing",'tight','padding','tight');
     % Plots
-    t1 = nexttile(t,5);
+    t1 = nexttile(ft);
     colormap(t1,'gray')
     axial_slice = imrotate(mni_brain(:,:,60),90);
     nrows = size(axial_slice,1);
@@ -512,10 +566,10 @@ for ig = 1:2
     %axis equal
     axis off
     %title({'Regions included in fMRI','connectivity calculations'})
-    set(gca,'fontsize',15)
+    set(gca,'fontsize',20)
     
     % Plot brain again
-    t2 = nexttile(t,6);
+    t2 = nexttile(ft);
     colormap(t2,'gray')
     coronal_slice = imrotate(squeeze(mni_brain(:,100,:)),90);
     nrows = size(coronal_slice,1);
@@ -525,24 +579,24 @@ for ig = 1:2
     %axis equal
     axis off
     
-    annotation('textbox', [0.12 0.32 0.1 0.1],...
+    annotation('textbox', [0.09 0.90 0.1 0.1],...
         'String', 'Regions included in fMRI connectivity calculations', ...
         'EdgeColor', 'none', ...
-        'fontweight','bold','fontsize',17,...
+        'fontweight','bold','fontsize',20,...
         'HorizontalAlignment', 'left')
     
-    fprintf(fid,[' Fig. 2C shows the left temporal Brainnetome atlas regions included for fMRI connectivity '...
+    fprintf(fid,[' Fig. 3A shows the left temporal Brainnetome atlas regions included for fMRI connectivity '...
         'analysis.']);
     
     
     %% Main plot
-    nexttile(t,7,[1 2])
+    nexttile(ft,3,[1 2])
     if rm_controls
         [~,stats] = boxplot_with_points(AI,lat,1,{'left','right','bilateral'},[],'para');
     else
         [~,stats] = boxplot_with_points(AI,lat,1,{'left','right','bilateral','Control'},[],'para');
     end
-    set(gca,'fontsize',15)
+    set(gca,'fontsize',20)
     ylabel('Asymmetry index')
     title({'fMRI asymmetry by SOZ laterality'})
     
@@ -555,7 +609,7 @@ for ig = 1:2
     %}
     
     fprintf(fid,[' There was a significant difference in fMRI connectivity AI between TLE lateralities '...
-        '(ANOVA: F(%d,%d) = %1.1f, %s, &#951;<sup>2</sup> = %1.2f, Fig. 2D). Only '...
+        '(ANOVA: F(%d,%d) = %1.1f, %s, &#951;<sup>2</sup> = %1.2f, Fig. 3B). Only '...
         'the difference between the left and bilateral SOZ group was significant after '...
         'correcting for multiple comparisons (%s). '],...
         stats.tbl{2,3},stats.tbl{3,3},stats.tbl{2,5},get_p_html_el(stats.p),stats.eta2,...
@@ -581,13 +635,13 @@ for ig = 1:2
     
     %% Add subtitles
     annotation('textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-    annotation('textbox',[0 0.33 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-    annotation('textbox',[0.5 0.33 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+    annotation('textbox',[0.48 0.91 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
+    %annotation('textbox',[0 0.33 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
+    %annotation('textbox',[0.5 0.33 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
     
     
     %print(gcf,[plot_folder,'Fig2'],'-dpng')
-    print(gcf,[plot_folder,'Fig2'],'-dtiff')
+    print(fmriF,[plot_folder,'Fig3'],'-dtiff')
 
 end
 

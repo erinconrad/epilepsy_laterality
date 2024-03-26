@@ -33,6 +33,7 @@ mt_data = mt_data.out;
 empty_class = cellfun(@isempty,T.soz_lats);
 T(empty_class,:) = [];
 
+
 %% Load the pt file
 pt = load([data_folder,'pt.mat']);
 pt = pt.pt;
@@ -43,8 +44,12 @@ f1T = readtable([alfredo_folder,'df.csv']);
 %% Load clinical file for additional info for fMRI patients
 f2T = readtable([data_folder,'clinical_info/all_rids.csv']);
 
+%% Manual validation
+manT = readtable([inter_folder,'Manual validation.xlsx'],'Sheet','SOZ');
+
 %% Load MUSC clinical folder
 muscT = readtable([inter_folder,'LEN patient list research erin.xlsx']);
+muscLocT = readtable([inter_folder,'MUSC_Emory_LEN_SOZ_type.xlsx']);
 
 % Get musc outcomes, surg
 for ip = 1:size(T,1)
@@ -85,6 +90,40 @@ for ip = 1:size(T,1)
     end
 
 
+end
+
+%% Add mtl vs neo
+cleaned_name = cellfun(@(x) x(4:end),muscLocT.ParticipantID,'UniformOutput',false);
+for ip = 1:size(T,1)
+
+    % find matching row of SOZ type table 
+    musc_row = contains(cleaned_name,T.names{ip});
+    if sum(musc_row) == 1 && contains(T.names{ip},'MP')
+        if muscLocT.MTL(musc_row) == 1 && muscLocT.Neo(musc_row) == 0
+            T.specific_loc{ip} = 'MTL';
+        elseif muscLocT.MTL(musc_row) == 0 && muscLocT.Neo(musc_row) == 1
+            T.specific_loc{ip} = 'Neo';
+        else
+            T.specific_loc{ip} = 'Other';
+        end
+    end
+
+    % find matching row of manual validation one
+    hup_row = contains(manT.name,T.names{ip});
+    if sum(hup_row) == 1 && contains(T.names{ip},'HUP')
+        if contains(manT.region{hup_row},'mesial temporal')
+            T.specific_loc{ip} = 'MTL';
+        elseif contains(manT.region{hup_row},'temporal neocortical')
+            T.specific_loc{ip} = 'Neo';
+        else
+            T.specific_loc{ip} = 'Other';
+        end
+    end
+
+    
+end
+if 0
+    table(T.names,T.specific_loc)
 end
 
 %% Go through and remove non-temporal patients
@@ -569,11 +608,21 @@ fprintf(fid,['TLE lateralities were imbalanced across the two centers, with '...
 fprintf(fid,[' We visually validated a random sample of 50 automated spike detections from each patient '...
     '(bipolar montage). The median (IQR) percentage of automatically-detected spikes '...
     'determined to be true spikes was '...
-    '%1.1f%% (%1.1f%%-%1.1f%%) for HUP and %1.1f%% (%1.1f%%-%1.1f%%) for MUSC.</p>'],...
+    '%1.1f%% (%1.1f%%-%1.1f%%) for HUP and %1.1f%% (%1.1f%%-%1.1f%%) for MUSC.'],...
     median(perc_good(all_pts_hup_sp))*100,prctile(perc_good(all_pts_hup_sp),25)*100,...
     prctile(perc_good(all_pts_hup_sp),75)*100,...
     median(perc_good(all_pts_musc_sp))*100,prctile(perc_good(all_pts_musc_sp),25)*100,...
     prctile(perc_good(all_pts_musc_sp),75)*100);
+
+%% For revisions, add informaiton abdout % segments awake and % asleep
+n_connected = T.n_connected;
+n_wake = T.n_wake;
+n_sleep = T.n_sleep;
+fprintf(fid,[' Of the 72 time segments studied per patient, '...
+    'a median of %1.1f (IQR %1.1f-%1.1f) were determined to represent '...
+    'wakefulness, and %1.1f (IQR %1.1f-%1.1f) were determined to be in NREM sleep.</p>'],...
+    median(n_wake),prctile(n_wake,25),prctile(n_wake,75),...
+    median(n_sleep),prctile(n_sleep,25),prctile(n_sleep,75));
 
 %% COmpare duration between left and right
 if 0
