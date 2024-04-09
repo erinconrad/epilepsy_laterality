@@ -362,6 +362,12 @@ for ig = 1:2
             'bilateral SOZs (although none were significant after correcting for the false discovery rate). '...
             ' The best feature set to distinguish right from bilateral was again more heterogeneous ' ...
             '(and no features were significant).</p>']);
+
+        if 0 
+            sum(strcmp(T.soz_lats,'bilateral'))
+            sum(good_outcome_left)
+            sum(good_outcome_right)
+        end
     end
 
     % exit if ig == 2

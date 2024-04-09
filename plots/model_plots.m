@@ -14,6 +14,9 @@ end
 %% Load sozT
 sozT = readtable('Manual validation.xlsx','Sheet','SOZ');
 
+%% Load preimplant data
+piT = readtable('Manual validation.xlsx','Sheet','Pre-implant data');
+
 % Loop over choice of reference
 for ia = 1:length(which_refs) 
 
@@ -73,6 +76,32 @@ for ia = 1:length(which_refs)
                 set(gca,'fontsize',15)
         
         
+            end
+        end
+
+        if 0
+            % plots for graphical abstract
+            iv = 1;
+            for im = 1:2
+                figure
+                ll = plot(model(im).val(iv).side(1).result.X,...
+                    model(im).val(iv).side(1).result.Y,'linewidth',3);
+                hold on
+                lr = plot(model(im).val(iv).side(2).result.X,...
+                    model(im).val(iv).side(2).result.Y,'linewidth',3);
+                plot([0 1],[0 1],'k--','linewidth',3)
+                xlabel('False positive rate')
+                ylabel('True positive rate')
+                legend([ll,lr],{sprintf('%s: AUC = %1.2f',...
+                    'Left model',model(im).val(iv).side(1).result.AUC),...
+                    sprintf('%s: AUC = %1.2f',...
+                    'Right model',model(im).val(iv).side(2).result.AUC)},'fontsize',25,...
+                    'location','southeast')
+                %title(sprintf('%s %s',model(im).type,model(im).val(iv).description))
+  
+                set(gca,'fontsize',25)
+                print(gcf,[plot_folder,sprintf('abstract_%d',im)],'-depsc')
+                close(gcf)
             end
         end
         
@@ -543,6 +572,7 @@ for ia = 1:length(which_refs)
         %% Examining error sources
         if ia ==1 && io == 1
             error_stats = nan(2,4);
+            mri_error_stats = nan(2,4);
 
             % loop over left and right
             for is = 1:2
@@ -579,11 +609,34 @@ for ia = 1:length(which_refs)
                 soz_spec(cellfun(@isempty,soz_spec)) = {'other'};
                 nother = sum(sum(strcmp(soz_spec,'other')));
 
+                % Find the corresponding lesional status
+                mri_loc_table = piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad;
+                mri_name = piT.name;
+                mri_loc = cell(length(all_names),1);
+                for in = 1:length(all_names)
+                    % find the corresponding row
+                    r = strcmp(all_names{in},mri_name);
+                    if sum(r) > 1, error('what'); end
+
+                    % don't have musc yet
+                    if sum(r) == 0 && ~contains(all_names{in},'MP'), error('what'); end
+                    if sum(r) == 0, continue; end
+                    mri_loc{in} = mri_loc_table{r};
+                end
+                mri_spec = cell(length(all_names),1);
+                mri_loc(cellfun(@(x) isempty(x),mri_loc)) = {'na'};
+                mri_spec(contains(mri_loc,'temporal','IgnoreCase',true)) = {'temporal'};
+                mri_spec(~contains(mri_loc,'temporal','IgnoreCase',true)) = {'other'};
+
                 % make a table
                 errorT = table(all_names,all_agree,soz_spec);
+                mri_errorT = table(all_names,all_agree,mri_spec);
 
                 % remove the others
                 errorT(strcmp(errorT.soz_spec,'other'),:) = [];
+
+                % for mri table, remove musc
+                mri_errorT(contains(mri_errorT.all_names,'MP'),:) = [];
 
                 % 2x2 table
                 [tbl2x2,~,~,labels] = crosstab(errorT.all_agree,errorT.soz_spec);
@@ -591,6 +644,18 @@ for ia = 1:length(which_refs)
                 assert(strcmp(labels{1,2},'mesial temporal'))
                 [h,p,stats] = fishertest(tbl2x2);
                 error_stats(is,:) = [stats.OddsRatio, stats.ConfidenceInterval, p];
+
+                % mri 2x2 table
+                [tbl2x2,~,~,labels] = crosstab(mri_errorT.all_agree,mri_errorT.mri_spec);
+                assert(strcmp(labels{1,1},'0'))
+                assert(strcmp(labels{1,2},'temporal'))
+                [h,p,stats] = fishertest(tbl2x2);
+                mri_error_stats(is,:) = [stats.OddsRatio, stats.ConfidenceInterval, p];
+
+                if 0
+                    heatmap(mri_errorT,'all_agree','mri_spec')
+                end
+
             end
 
             fprintf(fid,[' We next examined whether model accuracy was associated '...

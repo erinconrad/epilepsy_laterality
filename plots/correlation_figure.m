@@ -30,11 +30,15 @@ mt_data = load([inter_folder,'mt_out_epilepsy_laterality.mat']);
 mt_data = mt_data.out;
 
 %% Get appropriate patients
+mt_data.all_soz_loc(cellfun(@(x) isempty(x),mt_data.all_soz_loc)) = {'na'};
+
+% I am correcting an error at the revision stage - I had forgotten to
+% exclude non-temporal patients from this analysis. Excluding now.
 switch which_pts
     case 'hup'
-        pts = contains(mt_data.all_names,'HUP');
+        pts = contains(mt_data.all_names,'HUP') & contains(mt_data.all_soz_loc,'temporal');
     case 'musc'
-        pts = contains(mt_data.all_names,'MP');
+        pts = contains(mt_data.all_names,'MP') & contains(mt_data.all_soz_loc,'temporal');
 end
 npts = length(pts);
 
@@ -195,6 +199,7 @@ thing_montages = nan(length(all_things),3);
 thing_montages_sd = nan(length(all_things),3);
 for in = 1:length(all_things)
     curr_net = mt_data.(all_things{in});
+
     temp_net = curr_net(pts,1,1);
     if ismember(all_things{in},networks)
         nfreq = size(temp_net{first_non_empty},3); % how many frequencies
@@ -215,7 +220,7 @@ for in = 1:length(all_things)
                 cnet = curr_net(:,im,is);
                 
                 for ip = 1:length(cnet)
-                
+                    if pts(ip) == 0, continue; end % remove if not TLE or not HUP
                     if isempty(cnet{ip}), continue; end
                     if ismember(all_things{in},networks)
                         net{ip,im,is,f} = (squeeze(nanmean(cnet{ip}(:,:,f),2))); % take the average connectivity for each electrode
@@ -248,6 +253,7 @@ for in = 1:length(all_things)
         % Loop over frequencies and patients
         for f = 1:nfreq
             for ip = 1:npts
+                if pts(ip) == 0, continue; end % remove if not TLE or not HUP
                 mnet1 = net{ip,m1,ss,f};
                 mnet2 = net{ip,m2,ss,f};
                 if isempty(mnet1) || isempty(mnet2)
@@ -324,9 +330,9 @@ which_sleep_stages = 3;
 % Restrict to correct hospital
 switch which_pts
     case 'hup'
-        T = T(contains(T.names,'HUP'),:);
+        T = T(contains(T.names,'HUP') & contains(T.soz_locs,'temporal'),:);
     case 'musc'
-        T = T(contains(T.names,'MP'),:);
+        T = T(contains(T.names,'MP') & contains(T.soz_locs,'temporal'),:);
 end
 
 %% Subfigure C: Inter-AI correlation

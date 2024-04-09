@@ -14,6 +14,9 @@ end
 %% Load sozT
 sozT = readtable('Manual validation.xlsx','Sheet','SOZ');
 
+%% Load preimplant data
+piT = readtable('Manual validation.xlsx','Sheet','Pre-implant data');
+
 % Loop over choice of reference
 for ia = 1:length(which_refs) 
 
@@ -543,6 +546,7 @@ for ia = 1:length(which_refs)
         %% Examining error sources
         if ia ==1 && io == 1
             error_stats = nan(2,4);
+            mri_error_stats = nan(2,4);
 
             % loop over left and right
             for is = 1:2
@@ -577,12 +581,36 @@ for ia = 1:length(which_refs)
                 soz_spec(contains(soz_loc,'mesial')) = {'mesial temporal'};
                 soz_spec(contains(soz_loc,'neocortical')) = {'temporal neocortical'};
                 soz_spec(cellfun(@isempty,soz_spec)) = {'other'};
+                nother = sum(sum(strcmp(soz_spec,'other')));
+
+                % Find the corresponding lesional status
+                mri_loc_table = piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad;
+                mri_name = piT.name;
+                mri_loc = cell(length(all_names),1);
+                for in = 1:length(all_names)
+                    % find the corresponding row
+                    r = strcmp(all_names{in},mri_name);
+                    if sum(r) > 1, error('what'); end
+
+                    % don't have musc yet
+                    if sum(r) == 0 && ~contains(all_names{in},'MP'), error('what'); end
+                    if sum(r) == 0, continue; end
+                    mri_loc{in} = mri_loc_table{r};
+                end
+                mri_spec = cell(length(all_names),1);
+                mri_loc(cellfun(@(x) isempty(x),mri_loc)) = {'na'};
+                mri_spec(contains(mri_loc,'temporal','IgnoreCase',true)) = {'temporal'};
+                mri_spec(~contains(mri_loc,'temporal','IgnoreCase',true)) = {'other'};
 
                 % make a table
                 errorT = table(all_names,all_agree,soz_spec);
+                mri_errorT = table(all_names,all_agree,mri_spec);
 
                 % remove the others
                 errorT(strcmp(errorT.soz_spec,'other'),:) = [];
+
+                % for mri table, remove musc
+                mri_errorT(contains(mri_errorT.all_names,'MP'),:) = [];
 
                 % 2x2 table
                 [tbl2x2,~,~,labels] = crosstab(errorT.all_agree,errorT.soz_spec);
@@ -590,17 +618,35 @@ for ia = 1:length(which_refs)
                 assert(strcmp(labels{1,2},'mesial temporal'))
                 [h,p,stats] = fishertest(tbl2x2);
                 error_stats(is,:) = [stats.OddsRatio, stats.ConfidenceInterval, p];
+
+                % mri 2x2 table
+                [tbl2x2,~,~,labels] = crosstab(mri_errorT.all_agree,mri_errorT.mri_spec);
+                assert(strcmp(labels{1,1},'0'))
+                assert(strcmp(labels{1,2},'temporal'))
+                [h,p,stats] = fishertest(tbl2x2);
+                mri_error_stats(is,:) = [stats.OddsRatio, stats.ConfidenceInterval, p];
+
+                if 0
+                    heatmap(mri_errorT,'all_agree','mri_spec')
+                end
+
             end
 
             fprintf(fid,[' We next examined whether model accuracy was associated '...
                 'with the precise localization of the SOZ. We aggregated patients '...
-                'from both There was no significant association between'...
-                ' model accuracy and mesial temporal (N = %d) vs. temporal neocortical (N = %d) '...
+                'from both HUP and MUSC, and selected only those patients whose '...
+                'clinician-defined SOZ was either mesial temporal (N = %d) or '...
+                'temporal neocortical (N = %d), excluding %d patients with broader '...
+                'temporal localizations. We tested for the association between mesial temporal '...
+                'vs. temporal neocortical localization and correct vs. incorrect '...
+                'laterality classification with a Fisher''s exact test. '...
+                'There was no significant association between'...
+                ' model accuracy and mesial temporal vs. temporal neocortical '...
                 'localization for either the left- or right-sided model '...
                 '(left-sided model odds-ratio: %1.1f (95%% CI %1.1f-%1.1f), '...
                 '<i>p</i> = %1.2f; right-sided model: %1.1f (%1.1f-%1.1f), '...
                 '<i>p</i> = %1.2f).</p>'],...
-                sum(strcmp(soz_spec,'mesial temporal')),sum(strcmp(soz_spec,'temporal neocortical')),...
+                sum(strcmp(soz_spec,'mesial temporal')),sum(strcmp(soz_spec,'temporal neocortical')),nother,...
                 error_stats(1,1),error_stats(1,2),error_stats(1,3),error_stats(1,4),...
                 error_stats(2,1),error_stats(2,2),error_stats(2,3),error_stats(2,4));
         end
