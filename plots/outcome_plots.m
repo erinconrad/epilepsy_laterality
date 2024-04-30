@@ -244,7 +244,7 @@ for ir = 1:length(which_refs)
              surg_text(strcmp(T.surg_lat,'right')),...
              {'Left','Right'},out_text,'para');
         %}
-        out_lat_stats = unpaired_plot(outcome_num(strcmp(T.surg_lat,'left')),...
+        out_lat_stats = unpaired_plot_temporal_paper(outcome_num(strcmp(T.surg_lat,'left')),...
             outcome_num(strcmp(T.surg_lat,'right')),...
              {'Left','Right'},out_text,'para');
         set(gca().Children(3),'MarkerSize',10)
@@ -359,7 +359,7 @@ for ir = 1:length(which_refs)
         % surgery; probability of right for those with right surgery
         %
 
-        stats = unpaired_plot(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
+        stats = unpaired_plot_temporal_paper(concordant_lat_scores(good_outcome),concordant_lat_scores(bad_outcome),...
         {good_outcome_text,bad_outcome_text},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
@@ -417,7 +417,7 @@ for ir = 1:length(which_refs)
         laser = strcmp(T.surgery,'Laser ablation');
         resection = contains(T.surgery,'Resection');
         figure
-        type_stats = unpaired_plot(concordant_lat_scores(laser),concordant_lat_scores(resection),...
+        type_stats = unpaired_plot_temporal_paper(concordant_lat_scores(laser),concordant_lat_scores(resection),...
             {'Laser ablation','Resection'},{'Modeled probability of','concordant laterality'},'para');
         set(gca().Children(3),'MarkerSize',10)
         set(gca().Children(4),'MarkerSize',10)
