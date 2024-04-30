@@ -611,20 +611,29 @@ for ia = 1:length(which_refs)
 
                 % Find the corresponding lesional status
                 mri_loc_table = piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad;
+                mri_lat_table = piT.MRILesionalLaterality_left_Right_Bilateral_Broad_NA__NAMeansNon;
                 mri_name = piT.name;
                 mri_loc = cell(length(all_names),1);
+                mri_lat = cell(length(all_names),1);
                 for in = 1:length(all_names)
                     % find the corresponding row
                     r = strcmp(all_names{in},mri_name);
                     if sum(r) > 1, error('what'); end
 
                     % don't have musc yet
-                    if sum(r) == 0 && ~contains(all_names{in},'MP'), error('what'); end
-                    if sum(r) == 0, continue; end
+                    if sum(r) == 0, error('what'); end
                     mri_loc{in} = mri_loc_table{r};
+                    mri_lat{in} = mri_lat_table{r};
                 end
                 mri_spec = cell(length(all_names),1);
                 mri_loc(cellfun(@(x) isempty(x),mri_loc)) = {'na'};
+                mri_lat(cellfun(@(x) isempty(x),mri_lat)) = {'na'};
+                %{
+                mri_spec(contains(mri_loc,'temporal','IgnoreCase',true) & ...
+                    (strcmpi(mri_lat,'left') | strcmpi(mri_lat,'right'))) = {'unilateral temporal'};
+                mri_spec(~contains(mri_loc,'temporal','IgnoreCase',true) | ...
+                    ~(strcmpi(mri_lat,'left') | strcmpi(mri_lat,'right'))) = {'other'};
+                %}
                 mri_spec(contains(mri_loc,'temporal','IgnoreCase',true)) = {'temporal'};
                 mri_spec(~contains(mri_loc,'temporal','IgnoreCase',true)) = {'other'};
 
@@ -635,9 +644,7 @@ for ia = 1:length(which_refs)
                 % remove the others
                 errorT(strcmp(errorT.soz_spec,'other'),:) = [];
 
-                % for mri table, remove musc
-                mri_errorT(contains(mri_errorT.all_names,'MP'),:) = [];
-
+       
                 % 2x2 table
                 [tbl2x2,~,~,labels] = crosstab(errorT.all_agree,errorT.soz_spec);
                 assert(strcmp(labels{1,1},'0'))
@@ -671,10 +678,20 @@ for ia = 1:length(which_refs)
                 'localization for either the left- or right-sided model '...
                 '(left-sided model odds-ratio: %1.1f (95%% CI %1.1f-%1.1f), '...
                 '<i>p</i> = %1.2f; right-sided model: %1.1f (%1.1f-%1.1f), '...
-                '<i>p</i> = %1.2f).</p>'],...
+                '<i>p</i> = %1.2f).'],...
                 sum(strcmp(soz_spec,'mesial temporal')),sum(strcmp(soz_spec,'temporal neocortical')),nother,...
                 error_stats(1,1),error_stats(1,2),error_stats(1,3),error_stats(1,4),...
                 error_stats(2,1),error_stats(2,2),error_stats(2,3),error_stats(2,4));
+
+            fprintf(fid,[' Similarly, there was no significant difference in model accuracy between patients '...
+                'with temporal lobe lesions on MRI (N = %d) and '...
+                'patients whose MRI had other lesions or no lesion (N = %d) '...
+                '(left-sided model odds-ratio: %1.1f (95%% CI %1.1f-%1.1f), '...
+                '<i>p</i> = %1.2f; right-sided model: %1.1f (%1.1f-%1.1f), '...
+                '<i>p</i> = %1.2f).</p>'],...
+                sum(strcmp(mri_spec,'temporal')),sum(strcmp(mri_spec,'other')),...
+                mri_error_stats(1,1),mri_error_stats(1,2),mri_error_stats(1,3),mri_error_stats(1,4),...
+                mri_error_stats(2,1),mri_error_stats(2,2),mri_error_stats(2,3),mri_error_stats(2,4));
         end
     
     end

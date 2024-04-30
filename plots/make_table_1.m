@@ -15,6 +15,7 @@ plot_folder = [results_folder,'analysis/new_outcome/plots/'];
 if ~exist(plot_folder,'dir')
     mkdir(plot_folder)
 end
+plot_folder
 
 % add script folder to path
 scripts_folder = locations.script_folder;
@@ -47,7 +48,7 @@ f2T = readtable([data_folder,'clinical_info/all_rids.csv']);
 %% Manual validation
 manT = readtable([inter_folder,'Manual validation.xlsx'],'Sheet','SOZ');
 piT = readtable([inter_folder,'Manual validation.xlsx'],'Sheet','Pre-implant data');
-sT = readtable('Manual validation.xlsx','Sheet','EDF pipeline');
+sT = readtable([inter_folder,'Manual validation.xlsx'],'Sheet','EDF pipeline');
 
 %% Load MUSC clinical folder
 muscT = readtable([inter_folder,'LEN patient list research erin.xlsx']);
@@ -113,6 +114,17 @@ for ip = 1:size(T,1)
     % add error check once we have musc data
     if sum(row2) == 0, continue; end
     if find(row2) > length(piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad), continue; end
+    %{
+    % is there a unilateral temporal lesion?
+    if contains(piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad{row2},'temporal','IgnoreCase',true) && ...
+            (strcmpi(piT.MRILesionalLaterality_left_Right_Bilateral_Broad_NA__NAMeansNon{row2},'Right') || ...
+            strcmpi(piT.MRILesionalLaterality_left_Right_Bilateral_Broad_NA__NAMeansNon{row2},'Left'))
+        T.temporal_lesion{ip} = 'Yes';
+    else
+        T.temporal_lesion{ip} = 'No';
+    end
+    %}
+    % is there a temporal lesion (regardless of laterality)?
     if contains(piT.MRILesionalLocalization_temporal_Frontal_Other_Multifocal_Broad{row2},'temporal','IgnoreCase',true)
         T.temporal_lesion{ip} = 'Yes';
     else
@@ -364,8 +376,17 @@ sex_fmri = f1T.Sex(fmri_non_control);
 lat_fmri = f1T.Final_Lat(fmri_non_control);
 
 % lesional status
-lesional_fmri = f1T.MRI_Lesional(fmri_non_control);
-n_lesional_fmri = sum(strcmp(lesional_fmri,'Lesional'));
+n_non_controls = sum(fmri_non_control);
+%lesional_fmri = f1T.MRI_Lesional(fmri_non_control);
+%{
+n_lesional_fmri = sum(strcmp(f1T.MRI_Lesional,'Lesional') & ...
+    (strcmp(f1T.MRI_Lesion_Lat,'L') | strcmp(f1T.MRI_Lesion_Lat,'R')) & ...
+    (contains(f1T.MRI_Lesion_Loc,'temporal','ignorecase',true)) & ...
+    fmri_non_control);
+%}
+n_lesional_fmri = sum(strcmp(f1T.MRI_Lesional,'Lesional') & ...
+    contains(f1T.MRI_Lesion_Loc,'temporal','ignorecase',true) & ... 
+    fmri_non_control);
 
 % get corresponding rows in my demographics table
 [Lia,Locb]=ismember(fmri_rid_nums,f2T.record_id); % Locb has the corresponding rows
@@ -437,7 +458,7 @@ age_implant_str = {'Age at implant in years: median (range)',...
 lesional_str = {'MRI lesional: N (%)',...
     sprintf('%d (%1.1f%%)',sum(lesional == 1 & is_hup),sum(lesional==1 & is_hup)/sum(is_hup)*100),...
     sprintf('%d (%1.1f%%)',sum(lesional == 1 & is_musc),sum(lesional==1 & is_musc)/sum(is_musc)*100),...
-    sprintf('%d (%1.1f%%)',n_lesional_fmri,n_lesional_fmri/length(lesional_fmri)*100)};
+    sprintf('%d (%1.1f%%)',n_lesional_fmri,n_lesional_fmri/n_non_controls*100)};
 n_discordant_str = {'Bilateral or discordant pre-implant hypotheses: N (%)',...
     sprintf('%d (%1.1f%%)',sum(bilat_or_discordant==1 & is_hup),sum(bilat_or_discordant==1 & is_hup)/sum(~isnan(bilat_or_discordant(is_hup)))*100),...
     sprintf('%d (%1.1f%%)',sum(bilat_or_discordant==1 & is_musc),sum(bilat_or_discordant==1 & is_musc)/sum(~isnan(bilat_or_discordant(is_musc)))*100),...
