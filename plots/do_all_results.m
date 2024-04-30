@@ -8,10 +8,10 @@ laterality project.
 % containing intermediate results from the machine learning algorithm in
 % your results path and load these in order to generate plots (this will
 % take a few minutes at most).
-do_full_pipeline = 1; 
+do_full_pipeline = 0; 
 
 % End users should not change this
-doing_from_github = 0;
+doing_from_github = 1;
 
 %% Get file locs
 locations = epilepsy_laterality_locs;
