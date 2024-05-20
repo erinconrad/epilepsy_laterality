@@ -5,7 +5,7 @@ durations = [1 5 10 20 30];
 samples_per_duration = 20;
 
 %% Get file locs
-locations = fc_toolbox_locs;
+locations = epilepsy_laterality_locs;
 results_folder = [locations.main_folder,'results/'];
 data_folder = [locations.main_folder,'data/'];
 edf_path = [results_folder,'edf_summ_out_epilepsy_laterality/'];
