@@ -15,7 +15,6 @@ plot_folder = [results_folder,'analysis/new_outcome/plots/'];
 if ~exist(plot_folder,'dir')
     mkdir(plot_folder)
 end
-plot_folder
 
 % add script folder to path
 scripts_folder = locations.script_folder;
@@ -681,11 +680,14 @@ fprintf(fid,[' We visually validated a random sample of 50 automated spike detec
 
 %% For revisions, add informaiton abdout % segments awake and % asleep
 n_connected = T.n_connected;
+disconnected = 72 - n_connected;
 n_wake = T.n_wake;
 n_sleep = T.n_sleep;
 fprintf(fid,[' Of the 72 time segments studied per patient, '...
     'a median of %1.1f (IQR %1.1f-%1.1f) were determined to represent '...
-    'wakefulness, and %1.1f (IQR %1.1f-%1.1f) were determined to be in N2 or N3 sleep.</p>'],...
+    'wakefulness, and %1.1f (IQR %1.1f-%1.1f) were determined to be in N2 or N3 sleep '...
+    '(remaining segments were determined to be in other sleep stages, or occurring '...
+    'during a transition between sleep stages).</p>'],...
     median(n_wake),prctile(n_wake,25),prctile(n_wake,75),...
     median(n_sleep),prctile(n_sleep,25),prctile(n_sleep,75));
 
