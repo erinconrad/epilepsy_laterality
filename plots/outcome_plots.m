@@ -218,10 +218,10 @@ for ir = 1:length(which_refs)
         ylim(yl_new)
         plot([1 sum(good)],[ybar ybar],'Color','k'	,'linewidth',2)
         text((1+sum(good))/2,ytext,'Good outcome','fontsize',15,'HorizontalAlignment','center',...
-            'color',[0.4660, 0.6740, 0.1880])
+            'color','k')
         plot([sum(good)+1 length(good)],[ybar ybar],'Color','k','linewidth',2)
         text((sum(good)+1+length(good))/2,ytext,'Poor outcome','fontsize',15,'HorizontalAlignment','center',...
-            'color',[0.8500, 0.3250, 0.0980])
+            'color','k')
         plot([(sum(good)+sum(good)+1)/2,(sum(good)+sum(good)+1)/2],ylim, 'k--','linewidth',2)
         ylabel('Number of patients')
         title(sprintf('%s outcome',which_outcome_text))
