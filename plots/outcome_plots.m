@@ -216,10 +216,10 @@ for ir = 1:length(which_refs)
         ybar = (yl(2)-yl(1))*1.1;
         ytext = (yl(2)-yl(1))*1.2;
         ylim(yl_new)
-        plot([1 sum(good)],[ybar ybar],'Color',[0.4660, 0.6740, 0.1880]	,'linewidth',2)
+        plot([1 sum(good)],[ybar ybar],'Color','k'	,'linewidth',2)
         text((1+sum(good))/2,ytext,'Good outcome','fontsize',15,'HorizontalAlignment','center',...
             'color',[0.4660, 0.6740, 0.1880])
-        plot([sum(good)+1 length(good)],[ybar ybar],'Color',[0.8500, 0.3250, 0.0980],'linewidth',2)
+        plot([sum(good)+1 length(good)],[ybar ybar],'Color','k','linewidth',2)
         text((sum(good)+1+length(good))/2,ytext,'Poor outcome','fontsize',15,'HorizontalAlignment','center',...
             'color',[0.8500, 0.3250, 0.0980])
         plot([(sum(good)+sum(good)+1)/2,(sum(good)+sum(good)+1)/2],ylim, 'k--','linewidth',2)
@@ -463,7 +463,7 @@ for ir = 1:length(which_refs)
             'predict good or bad surgical outcome using the modeled probability of SOZ '...
             'laterality concordant with the side of surgery as the model input. '...
             'The performance of the model validated using leave-one-out classification had '...
-            'an AUC of %1.2f for predicting Engel outcome and %1.2f for predicting ILAE outcome (Fig. S6). '...
+            'an AUC of %1.2f for predicting Engel outcome and %1.2f for predicting ILAE outcome (Fig. S7). '...
             'Together, these results suggest that a model trained to predict the SOZ using spike rate '...
             'asymmetry is also associated with surgical outcome, although it has only modest ability to predict outcome.'],...
             prob_stats(1,1),prob_stats(1,2),prob_stats(1,3),prob_stats(1,4),prob_stats(1,5),prob_stats(1,6),...
@@ -473,7 +473,7 @@ for ir = 1:length(which_refs)
             prob_stats(1,8),prob_stats(2,8));
         
       
-        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S7 and S8).</p>']);
+        fprintf(fid,[' Results were similar when we used spikes detected in bipolar and machine references (Fig. S8 and S9).</p>']);
     end
     
     %% Add subtitles
@@ -492,14 +492,14 @@ for ir = 1:length(which_refs)
 
         annotation(omFig,'textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
         annotation(omFig,'textbox',[0.5 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-        print(omFig,[plot_folder,'FigS6'],'-dtiff')
+        print(omFig,[plot_folder,'FigS7'],'-dtiff')
         close(omFig)
     elseif ir == 2
         %print(gcf,[plot_folder,'FigS6'],'-dpng')
-        print(mainFig,[plot_folder,'FigS7'],'-dtiff')
+        print(mainFig,[plot_folder,'FigS8'],'-dtiff')
     elseif ir == 3
         %print(gcf,[plot_folder,'FigS7'],'-dpng')
-        print(mainFig,[plot_folder,'FigS8'],'-dtiff')
+        print(mainFig,[plot_folder,'FigS9'],'-dtiff')
     end
     close(mainFig)
     
