@@ -54,7 +54,7 @@ for ia = 1:length(which_refs)
         
         %% Initialize figure
         figure
-        set(gcf,'position',[1 1 1200 1400])
+        set(gcf,'position',[1 1 1400 1000])
         t = tiledlayout(3,3,"TileSpacing",'tight','padding','tight');
         
         %% A-B Do ROC curves for internal validation
