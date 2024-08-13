@@ -1,6 +1,7 @@
 function model_plots
 
 %% Parameters
+fsize = 20;
 use_model_predict_fcn = 1;
 which_refs = {'car','bipolar','machine'};
 
@@ -70,10 +71,10 @@ for ia = 1:length(which_refs)
                 legend([ll,lr],{sprintf('%s: AUC = %1.2f',...
                     model(im).val(iv).side(1).description,model(im).val(iv).side(1).result.AUC),...
                     sprintf('%s: AUC = %1.2f',...
-                    model(im).val(iv).side(2).description,model(im).val(iv).side(2).result.AUC)},'fontsize',15,...
+                    model(im).val(iv).side(2).description,model(im).val(iv).side(2).result.AUC)},'fontsize',fsize,...
                     'location','southeast')
                 title(sprintf('%s %s',model(im).type,model(im).val(iv).description))
-                set(gca,'fontsize',15)
+                set(gca,'fontsize',fsize)
         
         
             end
@@ -188,8 +189,8 @@ for ia = 1:length(which_refs)
             ax2.Color = 'none';
             ax2.Box = 'off';
             
-            legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',15)
-            set(ax1,'fontsize',15); set(ax2,'fontsize',15)
+            legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',fsize)
+            set(ax1,'fontsize',fsize); set(ax2,'fontsize',fsize)
             ylabel('|Estimated model coefficient|','color','k','fontsize',15)
             
             if ia == 1 && io == 1
@@ -326,7 +327,7 @@ for ia = 1:length(which_refs)
                 end
             end
             title(sprintf('Spikes (HUP cross-validation)\nBalanced accuracy %1.1f%%',balanced_accuracy*100))
-            set(gca,'fontsize',15)
+            set(gca,'fontsize',fsize)
         
         end
         
@@ -394,12 +395,12 @@ for ia = 1:length(which_refs)
         ylim([0.4 0.9])
         
         legend([el,er],{'Left vs right/bilateral','Right vs left/bilateral'},...
-            'location','southeast','fontsize',15)
+            'location','southeast','fontsize',fsize)
         xticks(1:ndurs)
         xticklabels(arrayfun(@(x) sprintf('%d min',x),durations,'uniformoutput',false))
         ylabel('Median (IQR) AUC')
         title(sprintf('Spike model accuracy by duration\n(HUP cross-validation)'))
-        set(gca,'fontsize',15)
+        set(gca,'fontsize',fsize)
         
         if ia == 1 && io == 1
             fprintf(fid,['Model accuracies rise quickly with duration sampled, achieving '...
@@ -501,7 +502,7 @@ for ia = 1:length(which_refs)
                 end
             end
             title(sprintf('Spikes (MUSC external validation)\nBalanced accuracy %1.1f%%',balanced_accuracy*100))
-            set(gca,'fontsize',15)
+            set(gca,'fontsize',fsize)
         
         end
         
