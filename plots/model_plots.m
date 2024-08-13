@@ -11,6 +11,7 @@ plot_folder = locations.el_plots_folder;
 if ~exist(plot_folder,'dir')
     mkdir(plot_folder)
 end
+addpath(genpath(locations.el_script_folder))
 
 %% Load sozT
 sozT = readtable('Manual validation.xlsx','Sheet','SOZ');
