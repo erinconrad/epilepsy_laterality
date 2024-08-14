@@ -53,14 +53,14 @@ for ia = 1:length(which_refs)
         
         
         %% Initialize figure
-        f1 = figure;
-        set(f1,'position',[1 1 1200 900])
-        t = tiledlayout(f1,2,6,"TileSpacing",'tight','padding','tight');
+        figure
+        set(gcf,'position',[1 1 1400 1000])
+        t = tiledlayout(3,3,"TileSpacing",'tight','padding','tight');
         
         %% A-B Do ROC curves for internal validation
         for iv = 1
             for im = 1:3
-                nexttile(t,[1 2])
+                nexttile
                 ll = plot(model(im).val(iv).side(1).result.X,...
                     model(im).val(iv).side(1).result.Y,'linewidth',2);
                 hold on
@@ -69,12 +69,12 @@ for ia = 1:length(which_refs)
                 plot([0 1],[0 1],'k--','linewidth',2)
                 xlabel('False positive rate')
                 ylabel('True positive rate')
-                legend([ll,lr],{sprintf('%s AUC: %1.2f',...
-                    'L vs R/B',model(im).val(iv).side(1).result.AUC),...
-                    sprintf('%s AUC: %1.2f',...
-                    'R vs L/B',model(im).val(iv).side(2).result.AUC)},'fontsize',fsize,...
+                legend([ll,lr],{sprintf('%s: AUC = %1.2f',...
+                    model(im).val(iv).side(1).description,model(im).val(iv).side(1).result.AUC),...
+                    sprintf('%s: AUC = %1.2f',...
+                    model(im).val(iv).side(2).description,model(im).val(iv).side(2).result.AUC)},'fontsize',fsize,...
                     'location','southeast')
-                title(sprintf('%s',model(im).type))
+                title(sprintf('%s %s',model(im).type,model(im).val(iv).description))
                 set(gca,'fontsize',fsize)
         
         
@@ -122,7 +122,6 @@ for ia = 1:length(which_refs)
                 model(2).val(1).side(1).result.AUC,model(2).val(1).side(2).result.AUC,...
                 model(3).val(1).side(1).result.AUC,model(3).val(1).side(2).result.AUC);
         elseif ia == 1 && io == 2
-            %{
             fprintf(sfid,['We again tested the ability of interictal features to predict SOZ laterality in unseen patients, '...
                 'now restricting the unilateral patients in the HUP dataset to be those with Engel 1 surgical outcomes. '...
                 'The AUCs of the ROC of the left- and right-sided internal cross-validation models trained on all features were %1.2f '...
@@ -136,7 +135,6 @@ for ia = 1:length(which_refs)
                 upper(which_refs{ia}),...
                 model(2).val(1).side(1).result.AUC,model(2).val(1).side(2).result.AUC,...
                 model(3).val(1).side(1).result.AUC,model(3).val(1).side(2).result.AUC);
-            %}
         end
         
         
@@ -160,8 +158,8 @@ for ia = 1:length(which_refs)
             right_names = right.sorted_features(1:n_to_plot);
             
             tt = tiledlayout(t,1,1);
-            tt.Layout.Tile = 7;
-            tt.Layout.TileSpan = [1 3];
+            tt.Layout.Tile = 4;
+            tt.Layout.TileSpan = [1 1];
             ax1 = axes(tt);
             
             
@@ -193,9 +191,9 @@ for ia = 1:length(which_refs)
             ax2.Box = 'off';
             
             legend([pl pr],{'Left vs right/bilateral','Right vs left/bilateral'},'location','northeast','fontsize',fsize)
-            set(ax1,'fontsize',fsize-2); set(ax2,'fontsize',fsize-2)
-            ylabel('|Estimated model coefficient|','color','k','fontsize',fsize)
-            %}
+            set(ax1,'fontsize',fsize); set(ax2,'fontsize',fsize)
+            ylabel('|Estimated model coefficient|','color','k','fontsize',15)
+            
             if ia == 1 && io == 1
                 fprintf(fid,['Spike rates, spike timing, and bandpower were the most important '...
                     'features for both the left- and the right-sided models (Fig. 4D).</p>']);
@@ -235,9 +233,6 @@ for ia = 1:length(which_refs)
         end
         
         %% E-F Confusion matrix (spikes only, internal cross-validation)
-        f2 = figure;
-        set(f2,'position',[1 1 1000 800])
-        t3 = tiledlayout(f2,2,2,"TileSpacing",'tight','padding','tight');
         curr = model(2).val(1);
         both_bal_acc = nan(2,1);
         both_opt_thresh = nan(2,1);
@@ -304,7 +299,7 @@ for ia = 1:length(which_refs)
             both_bal_acc(is) = balanced_accuracy;
             
             % Plot
-            nexttile(t3)
+            nexttile(t)
             % Map numbers onto 0 to 1
             new_numbers = map_numbers_onto_range(C,[1 0]);
             Ccolor = cat(3,ones(nclasses,nclasses,1),repmat(new_numbers,1,1,2));
@@ -341,12 +336,11 @@ for ia = 1:length(which_refs)
             fprintf(fid,['<p>We further probed the accuracy of the spike-rate only model. '...
                 'Confusion matrices for the left- and right-sided models at the optimal '...
                 'operating points '...
-                'are shown in Figs. 5A and 5B. The balanced accuracy '...
+                'are shown in Figs. 4E and 4F. The balanced accuracy '...
                 'was %1.1f%% for the model predicting left vs. right/bilateral SOZ, '...
                 'and %1.1f%% for the model predicting right vs. left/bilateral SOZ. '],...
                 both_bal_acc(1)*100,both_bal_acc(2)*100);
         elseif ia == 1 && io == 2
-            %{
             fprintf(sfid,['<p>We further probed the accuracy of the spike-rate only model. '...
                 'Confusion matrices for the left- and right-sided models at the optimal '...
                 'operating points '...
@@ -354,14 +348,13 @@ for ia = 1:length(which_refs)
                 'was %1.1f%% for the model predicting left vs. right/bilateral SOZ, '...
                 'and %1.1f%% for the model predicting right vs. left/bilateral SOZ. '],...
                 both_bal_acc(1)*100,both_bal_acc(2)*100);
-            %}
         end
         
         %% G: Subsampling plots, internal validation
         if 1
         sub = out.cv_ss; % cross validation
         
-        nexttile(t,[1 3])
+        nexttile(t)
         
         durations = [1 5 10 20 30];
         
@@ -407,17 +400,15 @@ for ia = 1:length(which_refs)
         xticks(1:ndurs)
         xticklabels(arrayfun(@(x) sprintf('%d min',x),durations,'uniformoutput',false))
         ylabel('Median (IQR) AUC')
-        title(sprintf('Spike model accuracy by duration'))
+        title(sprintf('Spike model accuracy by duration\n(HUP cross-validation)'))
         set(gca,'fontsize',fsize)
         
         if ia == 1 && io == 1
             fprintf(fid,['Model accuracies rise quickly with duration sampled, achieving '...
-                'an accuracy similar to the full-duration models with 5 minutes of sampling (Fig. 4E).']);
+                'an accuracy similar to the full-duration models with 5 minutes of sampling (Fig. 4G).']);
         elseif ia == 1 && io == 2
-            %{
             fprintf(sfid,['Model accuracies rise quickly with duration sampled, achieving '...
                 'an accuracy similar to the full-duration models with 5 minutes of sampling (Fig. S5G).']);
-            %}
         end
         
         end
@@ -483,7 +474,7 @@ for ia = 1:length(which_refs)
             both_bal_acc(is) = balanced_accuracy;
             
             % Plot
-            nexttile(t3)
+            nexttile(t)
             % Map numbers onto 0 to 1
             new_numbers = map_numbers_onto_range(C,[1 0]);
             Ccolor = cat(3,ones(nclasses,nclasses,1),repmat(new_numbers,1,1,2));
@@ -508,7 +499,7 @@ for ia = 1:length(which_refs)
             hold on
             for i = 1:nclasses
                 for j = 1:nclasses
-                    text(i,j,sprintf('%d',C(j,i)),'horizontalalignment','center','fontsize',25)
+                    text(i,j,sprintf('%d',C(j,i)),'horizontalalignment','center','fontsize',20)
                 end
             end
             title(sprintf('Spikes (MUSC external validation)\nBalanced accuracy %1.1f%%',balanced_accuracy*100))
@@ -520,7 +511,7 @@ for ia = 1:length(which_refs)
             fprintf(fid,[' Finally, we tested how the spike-only models performed in the '...
                     'external MUSC dataset.']);
             fprintf(fid,[' The balanced accuracies were %1.1f%% and %1.1f%% '...
-                'for the left-sided and right-sided models, respectively (Fig. 5C and 5D).</p>'],both_bal_acc(1)*100,...
+                'for the left-sided and right-sided models, respectively (Fig. 4H and 4I).</p>'],both_bal_acc(1)*100,...
                 both_bal_acc(2)*100);
             
             fprintf(fid,['<p>These results suggest that models '...
@@ -532,13 +523,12 @@ for ia = 1:length(which_refs)
             fprintf(fid,[' Results were similar, although with higher AUCs '...
                 'across all models, when we restricted analysis of unilateral HUP patients to be those with '...
                 'Engel 1 surgical outcomes to ' ...
-                'build and internally validate the SOZ laterality classifier (Supplementary Figures 4-5).']);
+                'build and internally validate the SOZ laterality classifier (Fig. S4).']);
     
             fprintf(fid,[' Results were also similar when we used spikes detected in bipolar and machine references to '...
-                'build the SOZ laterality classifier (Supplementary Figures 6-9).']);
+                'build the SOZ laterality classifier (Fig. S5 and S6).']);
         elseif ia == 1 && io == 2
 
-            %{
             fprintf(sfid,[' Finally, we tested how the spike-only models performed in the '...
                     'external MUSC dataset.']);
             fprintf(sfid,[' The balanced accuracies were %1.1f%% and %1.1f%% '...
@@ -549,43 +539,35 @@ for ia = 1:length(which_refs)
                 'all patients regardless of surgical outcome, although higher AUCs were '...
                 'achieved across all models when we restrict analysis of unilateral '...
                 'patients to those with good outcomes.</p>']);
-            %}
         end
             
         
         %% Add subtitles
-        annotation(f1,'textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-        annotation(f1,'textbox',[0.35 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-        annotation(f1,'textbox',[0.7 0.9 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-        annotation(f1,'textbox',[0 0.4 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
-        annotation(f1,'textbox',[0.52 0.4 0.1 0.1],'String','E','LineStyle','none','fontsize',25)
-
-        annotation(f2,'textbox',[0 0.9 0.1 0.1],'String','A','LineStyle','none','fontsize',25)
-        annotation(f2,'textbox',[0.51 0.9 0.1 0.1],'String','B','LineStyle','none','fontsize',25)
-        annotation(f2,'textbox',[0 0.38 0.1 0.1],'String','C','LineStyle','none','fontsize',25)
-        annotation(f2,'textbox',[0.51 0.38 0.1 0.1],'String','D','LineStyle','none','fontsize',25)
+        annotation('textbox',[0 0.905 0.1 0.1],'String','A','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.36 0.905 0.1 0.1],'String','B','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.70 0.905 0.1 0.1],'String','C','LineStyle','none','fontsize',20)
+        annotation('textbox',[0 0.56 0.1 0.1],'String','D','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.36 0.56 0.1 0.1],'String','E','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.70 0.56 0.1 0.1],'String','F','LineStyle','none','fontsize',20)
+        annotation('textbox',[0 0.22 0.1 0.1],'String','G','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.36 0.22 0.1 0.1],'String','H','LineStyle','none','fontsize',20)
+        annotation('textbox',[0.70 0.22 0.1 0.1],'String','I','LineStyle','none','fontsize',20)
         
         
         
         
         if ia == 1 && io == 1
             %print(gcf,[plot_folder,'Fig3'],'-dpng')
-            print(f1,[plot_folder,'Fig4'],'-dpng')
-            print(f2,[plot_folder,'Fig5'],'-dpng')
-
-            print(f1,[plot_folder,'Fig4'],'-depsc')
-            print(f2,[plot_folder,'Fig5'],'-depsc')
+            print(gcf,[plot_folder,'Fig4'],'-dtiff')
         elseif ia == 1 && io == 2
-            print(f1,[plot_folder,'FigS4'],'-dpng')
-            print(f2,[plot_folder,'FigS5'],'-dpng')
+            %print(gcf,[plot_folder,'FigS3'],'-dpng')
+            print(gcf,[plot_folder,'FigS4'],'-dtiff')
         elseif ia == 2
             %print(gcf,[plot_folder,'FigS4'],'-dpng')
-            print(f1,[plot_folder,'FigS6'],'-dpng')
-            print(f2,[plot_folder,'FigS7'],'-dpng')
+            print(gcf,[plot_folder,'FigS5'],'-dtiff')
         elseif ia == 3
             %print(gcf,[plot_folder,'FigS5'],'-dpng')
-            print(f1,[plot_folder,'FigS8'],'-dpng')
-            print(f2,[plot_folder,'FigS9'],'-dpng')
+            print(gcf,[plot_folder,'FigS6'],'-dtiff')
         end
 
 
